@@ -5,6 +5,7 @@ import * as THREE from "three";
 import { Court, COURT_WIDTH, COURT_DEPTH } from "./Court";
 import { usePong } from "@/lib/stores/usePong";
 import { useAudio } from "@/lib/stores/useAudio";
+import { useTouchControls } from "@/lib/stores/useTouchControls";
 
 const PADDLE_WIDTH = 0.5;
 const PADDLE_HEIGHT = 1;
@@ -18,6 +19,7 @@ function PlayerPaddle({ paddleRef, onVelocityUpdate }: {
   onVelocityUpdate: (velocity: number) => void;
 }) {
   const [, getKeys] = useKeyboardControls();
+  const { isMovingUp, isMovingDown } = useTouchControls();
   const speed = 0.15;
   const maxZ = COURT_DEPTH / 2 - PADDLE_DEPTH / 2 - 0.5;
   const lastZRef = useRef(0);
@@ -27,10 +29,13 @@ function PlayerPaddle({ paddleRef, onVelocityUpdate }: {
     const { forward, backward } = getKeys();
     const prevZ = paddleRef.current.position.z;
     
-    if (forward) {
+    const moveUp = forward || isMovingUp;
+    const moveDown = backward || isMovingDown;
+    
+    if (moveUp) {
       paddleRef.current.position.z = Math.max(paddleRef.current.position.z - speed, -maxZ);
     }
-    if (backward) {
+    if (moveDown) {
       paddleRef.current.position.z = Math.min(paddleRef.current.position.z + speed, maxZ);
     }
     

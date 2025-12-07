@@ -5,6 +5,7 @@ import "@fontsource/inter";
 import { GameScene } from "./components/game/GameScene";
 import { GameHUD } from "./components/game/GameHUD";
 import { SoundManager } from "./components/game/SoundManager";
+import { TouchControls } from "./components/game/TouchControls";
 
 const controls = [
   { name: "forward", keys: ["KeyW", "ArrowUp"] },
@@ -53,6 +54,7 @@ function App() {
           </Canvas>
           
           <GameHUD />
+          <TouchControls />
           <SoundManager />
         </KeyboardControls>
       )}
