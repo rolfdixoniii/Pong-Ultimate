@@ -1,6 +1,6 @@
-import { useRef, useState, useCallback, useEffect } from "react";
+import { useRef, useCallback, useEffect, useMemo } from "react";
 import { useFrame } from "@react-three/fiber";
-import { useKeyboardControls } from "@react-three/drei";
+import { useKeyboardControls, Trail } from "@react-three/drei";
 import * as THREE from "three";
 import { Court, COURT_WIDTH, COURT_DEPTH } from "./Court";
 import { usePong } from "@/lib/stores/usePong";
@@ -14,15 +14,26 @@ const BALL_RADIUS = 0.3;
 const CURVE_STRENGTH = 0.003;
 const CURVE_DECAY = 0.98;
 
+const ballPositionRef = { current: new THREE.Vector3(0, BALL_RADIUS, 0) };
+const ballVelocityRef = { current: new THREE.Vector3(0, 0, 0) };
+
 function PlayerPaddle({ paddleRef, onVelocityUpdate }: { 
   paddleRef: React.RefObject<THREE.Mesh>;
   onVelocityUpdate: (velocity: number) => void;
 }) {
   const [, getKeys] = useKeyboardControls();
   const { isMovingUp, isMovingDown } = useTouchControls();
-  const speed = 0.15;
-  const maxZ = COURT_DEPTH / 2 - PADDLE_DEPTH / 2 - 0.5;
+  const hasSpeedBoost = usePong(state => state.hasEffect("speedBoost", "player"));
+  const hasBigPaddle = usePong(state => state.hasEffect("bigPaddle", "player"));
+  const hitFlash = usePong(state => state.hitFlash);
+  
+  const baseSpeed = 0.15;
+  const speed = hasSpeedBoost ? baseSpeed * 1.5 : baseSpeed;
+  const paddleScale = hasBigPaddle ? 1.5 : 1;
+  const maxZ = COURT_DEPTH / 2 - (PADDLE_DEPTH * paddleScale) / 2 - 0.5;
   const lastZRef = useRef(0);
+  
+  const isFlashing = hitFlash?.paddle === "player";
   
   useFrame(() => {
     if (!paddleRef.current) return;
@@ -39,6 +50,8 @@ function PlayerPaddle({ paddleRef, onVelocityUpdate }: {
       paddleRef.current.position.z = Math.min(paddleRef.current.position.z + speed, maxZ);
     }
     
+    paddleRef.current.scale.z = paddleScale;
+    
     const velocityZ = paddleRef.current.position.z - prevZ;
     onVelocityUpdate(velocityZ);
     lastZRef.current = paddleRef.current.position.z;
@@ -47,21 +60,31 @@ function PlayerPaddle({ paddleRef, onVelocityUpdate }: {
   return (
     <mesh ref={paddleRef} position={[-COURT_WIDTH / 2 + 1, 0.5, 0]} castShadow receiveShadow>
       <boxGeometry args={[PADDLE_WIDTH, PADDLE_HEIGHT, PADDLE_DEPTH]} />
-      <meshStandardMaterial color="#4fc3f7" emissive="#4fc3f7" emissiveIntensity={0.2} />
+      <meshStandardMaterial 
+        color={isFlashing ? "#ffffff" : "#4fc3f7"} 
+        emissive={isFlashing ? "#ffffff" : "#4fc3f7"} 
+        emissiveIntensity={isFlashing ? 1 : 0.3} 
+      />
     </mesh>
   );
 }
 
-function AIPaddle({ paddleRef, ballPosition, ballVelocity, onVelocityUpdate }: { 
+function AIPaddle({ paddleRef, onVelocityUpdate }: { 
   paddleRef: React.RefObject<THREE.Mesh>; 
-  ballPosition: THREE.Vector3;
-  ballVelocity: THREE.Vector3;
   onVelocityUpdate: (velocity: number) => void;
 }) {
-  const { difficulty } = usePong();
-  const maxZ = COURT_DEPTH / 2 - PADDLE_DEPTH / 2 - 0.5;
+  const difficulty = usePong(state => state.difficulty);
+  const hasBigPaddle = usePong(state => state.hasEffect("bigPaddle", "ai"));
+  const hasSpeedBoost = usePong(state => state.hasEffect("speedBoost", "ai"));
+  const hitFlash = usePong(state => state.hitFlash);
+  
+  const speedMultiplier = hasSpeedBoost ? 1.5 : 1;
+  const paddleScale = hasBigPaddle ? 1.5 : 1;
+  const maxZ = COURT_DEPTH / 2 - (PADDLE_DEPTH * paddleScale) / 2 - 0.5;
   const reactionTimerRef = useRef(0);
   const targetZRef = useRef(0);
+  
+  const isFlashing = hitFlash?.paddle === "ai";
   
   useFrame((_, delta) => {
     if (!paddleRef.current) return;
@@ -71,6 +94,9 @@ function AIPaddle({ paddleRef, ballPosition, ballVelocity, onVelocityUpdate }: {
     
     if (reactionTimerRef.current >= difficulty.aiReactionDelay) {
       reactionTimerRef.current = 0;
+      
+      const ballPosition = ballPositionRef.current;
+      const ballVelocity = ballVelocityRef.current;
       
       let predictedZ = ballPosition.z;
       
@@ -91,13 +117,16 @@ function AIPaddle({ paddleRef, ballPosition, ballVelocity, onVelocityUpdate }: {
     const diff = targetZRef.current - currentZ;
     
     if (Math.abs(diff) > 0.1) {
-      const moveAmount = Math.sign(diff) * Math.min(Math.abs(diff), difficulty.aiSpeed);
+      const aiSpeed = difficulty.aiSpeed * speedMultiplier;
+      const moveAmount = Math.sign(diff) * Math.min(Math.abs(diff), aiSpeed);
       paddleRef.current.position.z = THREE.MathUtils.clamp(
         currentZ + moveAmount,
         -maxZ,
         maxZ
       );
     }
+    
+    paddleRef.current.scale.z = paddleScale;
     
     const velocityZ = paddleRef.current.position.z - prevZ;
     onVelocityUpdate(velocityZ);
@@ -106,26 +135,76 @@ function AIPaddle({ paddleRef, ballPosition, ballVelocity, onVelocityUpdate }: {
   return (
     <mesh ref={paddleRef} position={[COURT_WIDTH / 2 - 1, 0.5, 0]} castShadow receiveShadow>
       <boxGeometry args={[PADDLE_WIDTH, PADDLE_HEIGHT, PADDLE_DEPTH]} />
-      <meshStandardMaterial color="#ef5350" emissive="#ef5350" emissiveIntensity={0.2} />
+      <meshStandardMaterial 
+        color={isFlashing ? "#ffffff" : "#ef5350"} 
+        emissive={isFlashing ? "#ffffff" : "#ef5350"} 
+        emissiveIntensity={isFlashing ? 1 : 0.3} 
+      />
     </mesh>
   );
 }
 
-function Ball({ playerPaddleRef, aiPaddleRef, onPositionUpdate, onVelocityUpdate, playerPaddleVelocity, aiPaddleVelocity }: {
+function PowerUpOrb({ powerUp }: { powerUp: { id: string; type: string; position: { x: number; z: number } } }) {
+  const meshRef = useRef<THREE.Mesh>(null);
+  const timeRef = useRef(Math.random() * Math.PI * 2);
+  
+  const color = useMemo(() => {
+    switch (powerUp.type) {
+      case "bigPaddle": return "#00ff88";
+      case "slowBall": return "#ff8800";
+      case "speedBoost": return "#ff00ff";
+      default: return "#ffffff";
+    }
+  }, [powerUp.type]);
+  
+  useFrame((_, delta) => {
+    if (!meshRef.current) return;
+    timeRef.current += delta * 3;
+    meshRef.current.position.y = 0.5 + Math.sin(timeRef.current) * 0.2;
+    meshRef.current.rotation.y += delta * 2;
+  });
+  
+  return (
+    <mesh ref={meshRef} position={[powerUp.position.x, 0.5, powerUp.position.z]}>
+      <octahedronGeometry args={[0.4, 0]} />
+      <meshStandardMaterial 
+        color={color} 
+        emissive={color} 
+        emissiveIntensity={0.8}
+        transparent
+        opacity={0.9}
+      />
+    </mesh>
+  );
+}
+
+function Ball({ playerPaddleRef, aiPaddleRef, playerPaddleVelocity, aiPaddleVelocity }: {
   playerPaddleRef: React.RefObject<THREE.Mesh>;
   aiPaddleRef: React.RefObject<THREE.Mesh>;
-  onPositionUpdate: (pos: THREE.Vector3) => void;
-  onVelocityUpdate: (vel: THREE.Vector3) => void;
   playerPaddleVelocity: number;
   aiPaddleVelocity: number;
 }) {
   const meshRef = useRef<THREE.Mesh>(null);
   const velocityRef = useRef(new THREE.Vector3(0, 0, 0));
   const curveRef = useRef(0);
-  const { phase, playerScored, aiScored, difficulty } = usePong();
+  const phase = usePong(state => state.phase);
+  const difficulty = usePong(state => state.difficulty);
+  const playerScored = usePong(state => state.playerScored);
+  const aiScored = usePong(state => state.aiScored);
+  const incrementCombo = usePong(state => state.incrementCombo);
+  const resetCombo = usePong(state => state.resetCombo);
+  const triggerScreenShake = usePong(state => state.triggerScreenShake);
+  const triggerHitFlash = usePong(state => state.triggerHitFlash);
+  const spawnPowerUp = usePong(state => state.spawnPowerUp);
+  const powerUps = usePong(state => state.powerUps);
+  const collectPowerUp = usePong(state => state.collectPowerUp);
+  const updateEffects = usePong(state => state.updateEffects);
+  const hasSlowBall = usePong(state => state.hasEffect("slowBall", "player"));
   const { playHit } = useAudio();
   const scoredRef = useRef(false);
   const timeoutRef = useRef<number | null>(null);
+  const rallyCountRef = useRef(0);
+  const lastSpawnRallyRef = useRef(0);
   
   const initializeBall = useCallback((direction: number = 1) => {
     const angleRange = (Math.PI / 3) * difficulty.angleMultiplier;
@@ -136,7 +215,9 @@ function Ball({ playerPaddleRef, aiPaddleRef, onPositionUpdate, onVelocityUpdate
       difficulty.ballInitialSpeed * Math.sin(angle)
     );
     curveRef.current = 0;
-  }, [difficulty]);
+    rallyCountRef.current = 0;
+    resetCombo();
+  }, [difficulty, resetCombo]);
   
   useEffect(() => {
     scoredRef.current = false;
@@ -160,15 +241,21 @@ function Ball({ playerPaddleRef, aiPaddleRef, onPositionUpdate, onVelocityUpdate
   useFrame(() => {
     if (!meshRef.current || phase !== "playing" || scoredRef.current) return;
     
+    updateEffects(Date.now());
+    
     const ball = meshRef.current;
     const velocity = velocityRef.current;
+    
+    const speedMultiplier = hasSlowBall ? 0.7 : 1;
     
     velocity.z += curveRef.current;
     curveRef.current *= CURVE_DECAY;
     
-    ball.position.add(velocity);
-    onPositionUpdate(ball.position.clone());
-    onVelocityUpdate(velocity.clone());
+    const scaledVelocity = velocity.clone().multiplyScalar(speedMultiplier);
+    ball.position.add(scaledVelocity);
+    
+    ballPositionRef.current.copy(ball.position);
+    ballVelocityRef.current.copy(velocity);
     
     const maxZ = COURT_DEPTH / 2 - BALL_RADIUS;
     if (ball.position.z > maxZ || ball.position.z < -maxZ) {
@@ -176,21 +263,39 @@ function Ball({ playerPaddleRef, aiPaddleRef, onPositionUpdate, onVelocityUpdate
       curveRef.current *= -1;
       ball.position.z = THREE.MathUtils.clamp(ball.position.z, -maxZ, maxZ);
       playHit();
+      triggerScreenShake(0.1);
+    }
+    
+    for (const powerUp of powerUps) {
+      const dx = ball.position.x - powerUp.position.x;
+      const dz = ball.position.z - powerUp.position.z;
+      const dist = Math.sqrt(dx * dx + dz * dz);
+      
+      if (dist < 0.8) {
+        const collector = velocity.x < 0 ? "player" : "ai";
+        collectPowerUp(powerUp.id, collector);
+        triggerScreenShake(0.2);
+      }
     }
     
     const playerPaddleX = -COURT_WIDTH / 2 + 1;
     const aiPaddleX = COURT_WIDTH / 2 - 1;
     
+    const playerHasBigPaddle = usePong.getState().hasEffect("bigPaddle", "player");
+    const aiHasBigPaddle = usePong.getState().hasEffect("bigPaddle", "ai");
+    
     if (playerPaddleRef.current) {
       const paddle = playerPaddleRef.current;
+      const paddleDepth = PADDLE_DEPTH * (playerHasBigPaddle ? 1.5 : 1);
+      
       if (
         ball.position.x - BALL_RADIUS < playerPaddleX + PADDLE_WIDTH / 2 &&
         ball.position.x + BALL_RADIUS > playerPaddleX - PADDLE_WIDTH / 2 &&
-        ball.position.z > paddle.position.z - PADDLE_DEPTH / 2 - BALL_RADIUS &&
-        ball.position.z < paddle.position.z + PADDLE_DEPTH / 2 + BALL_RADIUS
+        ball.position.z > paddle.position.z - paddleDepth / 2 - BALL_RADIUS &&
+        ball.position.z < paddle.position.z + paddleDepth / 2 + BALL_RADIUS
       ) {
         velocity.x = Math.abs(velocity.x);
-        const hitOffset = (ball.position.z - paddle.position.z) / (PADDLE_DEPTH / 2);
+        const hitOffset = (ball.position.z - paddle.position.z) / (paddleDepth / 2);
         velocity.z += hitOffset * 0.05 * difficulty.angleMultiplier;
         
         curveRef.current = playerPaddleVelocity * CURVE_STRENGTH * 10;
@@ -201,19 +306,31 @@ function Ball({ playerPaddleRef, aiPaddleRef, onPositionUpdate, onVelocityUpdate
         
         ball.position.x = playerPaddleX + PADDLE_WIDTH / 2 + BALL_RADIUS;
         playHit();
+        
+        incrementCombo("player");
+        triggerHitFlash("player");
+        triggerScreenShake(0.15);
+        
+        rallyCountRef.current++;
+        if (rallyCountRef.current - lastSpawnRallyRef.current >= 3 && Math.random() < 0.4) {
+          spawnPowerUp();
+          lastSpawnRallyRef.current = rallyCountRef.current;
+        }
       }
     }
     
     if (aiPaddleRef.current) {
       const paddle = aiPaddleRef.current;
+      const paddleDepth = PADDLE_DEPTH * (aiHasBigPaddle ? 1.5 : 1);
+      
       if (
         ball.position.x + BALL_RADIUS > aiPaddleX - PADDLE_WIDTH / 2 &&
         ball.position.x - BALL_RADIUS < aiPaddleX + PADDLE_WIDTH / 2 &&
-        ball.position.z > paddle.position.z - PADDLE_DEPTH / 2 - BALL_RADIUS &&
-        ball.position.z < paddle.position.z + PADDLE_DEPTH / 2 + BALL_RADIUS
+        ball.position.z > paddle.position.z - paddleDepth / 2 - BALL_RADIUS &&
+        ball.position.z < paddle.position.z + paddleDepth / 2 + BALL_RADIUS
       ) {
         velocity.x = -Math.abs(velocity.x);
-        const hitOffset = (ball.position.z - paddle.position.z) / (PADDLE_DEPTH / 2);
+        const hitOffset = (ball.position.z - paddle.position.z) / (paddleDepth / 2);
         velocity.z += hitOffset * 0.05 * difficulty.angleMultiplier;
         
         curveRef.current = aiPaddleVelocity * CURVE_STRENGTH * 10;
@@ -224,71 +341,118 @@ function Ball({ playerPaddleRef, aiPaddleRef, onPositionUpdate, onVelocityUpdate
         
         ball.position.x = aiPaddleX - PADDLE_WIDTH / 2 - BALL_RADIUS;
         playHit();
+        
+        incrementCombo("ai");
+        triggerHitFlash("ai");
+        triggerScreenShake(0.1);
+        
+        rallyCountRef.current++;
       }
     }
     
     if (ball.position.x < -COURT_WIDTH / 2 - 1 && !scoredRef.current) {
       scoredRef.current = true;
       aiScored();
+      triggerScreenShake(0.4);
+      resetCombo();
       timeoutRef.current = window.setTimeout(() => resetBall(-1), 500);
     } else if (ball.position.x > COURT_WIDTH / 2 + 1 && !scoredRef.current) {
       scoredRef.current = true;
       playerScored();
+      triggerScreenShake(0.4);
+      resetCombo();
       timeoutRef.current = window.setTimeout(() => resetBall(1), 500);
     }
   });
   
   return (
-    <mesh ref={meshRef} position={[0, BALL_RADIUS, 0]} castShadow>
-      <sphereGeometry args={[BALL_RADIUS, 16, 16]} />
-      <meshStandardMaterial 
-        color="#ffffff" 
-        emissive="#ffffff" 
-        emissiveIntensity={0.5} 
-      />
-    </mesh>
+    <Trail
+      width={1}
+      length={8}
+      color="#ffffff"
+      attenuation={(t) => t * t}
+    >
+      <mesh ref={meshRef} position={[0, BALL_RADIUS, 0]} castShadow>
+        <sphereGeometry args={[BALL_RADIUS, 16, 16]} />
+        <meshStandardMaterial 
+          color="#ffffff" 
+          emissive="#ffffff" 
+          emissiveIntensity={0.8} 
+        />
+      </mesh>
+    </Trail>
   );
+}
+
+function CameraShake() {
+  const screenShake = usePong(state => state.screenShake);
+  const groupRef = useRef<THREE.Group>(null);
+  
+  useFrame(() => {
+    if (!groupRef.current) return;
+    if (screenShake > 0) {
+      groupRef.current.position.x = (Math.random() - 0.5) * screenShake * 2;
+      groupRef.current.position.y = (Math.random() - 0.5) * screenShake * 2;
+    } else {
+      groupRef.current.position.x = 0;
+      groupRef.current.position.y = 0;
+    }
+  });
+  
+  return <group ref={groupRef} />;
 }
 
 export function GameScene() {
   const playerPaddleRef = useRef<THREE.Mesh>(null);
   const aiPaddleRef = useRef<THREE.Mesh>(null);
-  const [ballPosition, setBallPosition] = useState(new THREE.Vector3(0, 0.3, 0));
-  const [ballVelocity, setBallVelocity] = useState(new THREE.Vector3(0, 0, 0));
-  const [playerPaddleVelocity, setPlayerPaddleVelocity] = useState(0);
-  const [aiPaddleVelocity, setAiPaddleVelocity] = useState(0);
-  const { phase } = usePong();
+  const playerPaddleVelocityRef = useRef(0);
+  const aiPaddleVelocityRef = useRef(0);
+  const phase = usePong(state => state.phase);
+  const powerUps = usePong(state => state.powerUps);
+  const screenShake = usePong(state => state.screenShake);
+  const groupRef = useRef<THREE.Group>(null);
   
-  const handleBallPositionUpdate = useCallback((pos: THREE.Vector3) => {
-    setBallPosition(pos);
+  const handlePlayerVelocityUpdate = useCallback((velocity: number) => {
+    playerPaddleVelocityRef.current = velocity;
   }, []);
   
-  const handleBallVelocityUpdate = useCallback((vel: THREE.Vector3) => {
-    setBallVelocity(vel);
+  const handleAiVelocityUpdate = useCallback((velocity: number) => {
+    aiPaddleVelocityRef.current = velocity;
   }, []);
+  
+  useFrame(() => {
+    if (!groupRef.current) return;
+    if (screenShake > 0) {
+      groupRef.current.position.x = (Math.random() - 0.5) * screenShake * 2;
+      groupRef.current.position.y = (Math.random() - 0.5) * screenShake;
+    } else {
+      groupRef.current.position.x = 0;
+      groupRef.current.position.y = 0;
+    }
+  });
   
   return (
-    <group>
+    <group ref={groupRef}>
       <Court />
       <PlayerPaddle 
         paddleRef={playerPaddleRef} 
-        onVelocityUpdate={setPlayerPaddleVelocity}
+        onVelocityUpdate={handlePlayerVelocityUpdate}
       />
       <AIPaddle 
         paddleRef={aiPaddleRef} 
-        ballPosition={ballPosition}
-        ballVelocity={ballVelocity}
-        onVelocityUpdate={setAiPaddleVelocity}
+        onVelocityUpdate={handleAiVelocityUpdate}
       />
+      
+      {powerUps.map(powerUp => (
+        <PowerUpOrb key={powerUp.id} powerUp={powerUp} />
+      ))}
       
       {phase === "playing" && (
         <Ball 
           playerPaddleRef={playerPaddleRef}
           aiPaddleRef={aiPaddleRef}
-          onPositionUpdate={handleBallPositionUpdate}
-          onVelocityUpdate={handleBallVelocityUpdate}
-          playerPaddleVelocity={playerPaddleVelocity}
-          aiPaddleVelocity={aiPaddleVelocity}
+          playerPaddleVelocity={playerPaddleVelocityRef.current}
+          aiPaddleVelocity={aiPaddleVelocityRef.current}
         />
       )}
     </group>

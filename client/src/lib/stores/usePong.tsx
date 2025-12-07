@@ -3,6 +3,21 @@ import { subscribeWithSelector } from "zustand/middleware";
 
 export type GamePhase = "menu" | "playing" | "paused" | "gameOver";
 
+export type PowerUpType = "bigPaddle" | "slowBall" | "multiball" | "speedBoost";
+
+export interface PowerUp {
+  id: string;
+  type: PowerUpType;
+  position: { x: number; z: number };
+  active: boolean;
+}
+
+export interface ActiveEffect {
+  type: PowerUpType;
+  expiresAt: number;
+  target: "player" | "ai";
+}
+
 export interface DifficultySettings {
   aiSpeed: number;
   aiReactionDelay: number;
@@ -46,6 +61,16 @@ interface PongState {
   round: number;
   difficulty: DifficultySettings;
   
+  combo: number;
+  maxCombo: number;
+  lastHitBy: "player" | "ai" | null;
+  
+  powerUps: PowerUp[];
+  activeEffects: ActiveEffect[];
+  
+  screenShake: number;
+  hitFlash: { paddle: "player" | "ai"; time: number } | null;
+  
   startGame: () => void;
   startNextRound: () => void;
   pauseGame: () => void;
@@ -53,7 +78,22 @@ interface PongState {
   resetGame: () => void;
   playerScored: () => void;
   aiScored: () => void;
+  
+  incrementCombo: (hitBy: "player" | "ai") => void;
+  resetCombo: () => void;
+  
+  spawnPowerUp: () => void;
+  collectPowerUp: (id: string, collector: "player" | "ai") => void;
+  removePowerUp: (id: string) => void;
+  updateEffects: (currentTime: number) => void;
+  hasEffect: (type: PowerUpType, target: "player" | "ai") => boolean;
+  
+  triggerScreenShake: (intensity: number) => void;
+  triggerHitFlash: (paddle: "player" | "ai") => void;
+  clearVisualEffects: () => void;
 }
+
+const POWER_UP_TYPES: PowerUpType[] = ["bigPaddle", "slowBall", "speedBoost"];
 
 export const usePong = create<PongState>()(
   subscribeWithSelector((set, get) => ({
@@ -65,6 +105,16 @@ export const usePong = create<PongState>()(
     round: 1,
     difficulty: getDifficultyForRound(1),
     
+    combo: 0,
+    maxCombo: 0,
+    lastHitBy: null,
+    
+    powerUps: [],
+    activeEffects: [],
+    
+    screenShake: 0,
+    hitFlash: null,
+    
     startGame: () => {
       const difficulty = getDifficultyForRound(1);
       set({ 
@@ -74,6 +124,11 @@ export const usePong = create<PongState>()(
         winner: null,
         round: 1,
         difficulty,
+        combo: 0,
+        maxCombo: 0,
+        lastHitBy: null,
+        powerUps: [],
+        activeEffects: [],
       });
     },
     
@@ -87,6 +142,11 @@ export const usePong = create<PongState>()(
         winner: null,
         round: nextRound,
         difficulty,
+        combo: 0,
+        maxCombo: 0,
+        lastHitBy: null,
+        powerUps: [],
+        activeEffects: [],
       });
     },
     
@@ -112,6 +172,11 @@ export const usePong = create<PongState>()(
         winner: null,
         round: 1,
         difficulty: getDifficultyForRound(1),
+        combo: 0,
+        maxCombo: 0,
+        lastHitBy: null,
+        powerUps: [],
+        activeEffects: [],
       });
     },
     
@@ -133,6 +198,88 @@ export const usePong = create<PongState>()(
       } else {
         set({ aiScore: newScore });
       }
+    },
+    
+    incrementCombo: (hitBy) => {
+      const { combo, lastHitBy, maxCombo } = get();
+      if (hitBy === "player") {
+        const newCombo = lastHitBy === "player" ? combo + 1 : 1;
+        set({ 
+          combo: newCombo, 
+          lastHitBy: hitBy,
+          maxCombo: Math.max(maxCombo, newCombo)
+        });
+      } else {
+        set({ combo: 0, lastHitBy: hitBy });
+      }
+    },
+    
+    resetCombo: () => {
+      set({ combo: 0, lastHitBy: null });
+    },
+    
+    spawnPowerUp: () => {
+      const { powerUps, phase } = get();
+      if (phase !== "playing" || powerUps.length >= 2) return;
+      
+      const type = POWER_UP_TYPES[Math.floor(Math.random() * POWER_UP_TYPES.length)];
+      const id = `powerup-${Date.now()}`;
+      const x = (Math.random() - 0.5) * 8;
+      const z = (Math.random() - 0.5) * 10;
+      
+      set({
+        powerUps: [...powerUps, { id, type, position: { x, z }, active: true }]
+      });
+    },
+    
+    collectPowerUp: (id, collector) => {
+      const { powerUps, activeEffects } = get();
+      const powerUp = powerUps.find(p => p.id === id);
+      if (!powerUp) return;
+      
+      const duration = powerUp.type === "speedBoost" ? 3000 : 5000;
+      const newEffect: ActiveEffect = {
+        type: powerUp.type,
+        expiresAt: Date.now() + duration,
+        target: collector
+      };
+      
+      set({
+        powerUps: powerUps.filter(p => p.id !== id),
+        activeEffects: [...activeEffects, newEffect]
+      });
+    },
+    
+    removePowerUp: (id) => {
+      const { powerUps } = get();
+      set({ powerUps: powerUps.filter(p => p.id !== id) });
+    },
+    
+    updateEffects: (currentTime) => {
+      const { activeEffects } = get();
+      const stillActive = activeEffects.filter(e => e.expiresAt > currentTime);
+      if (stillActive.length !== activeEffects.length) {
+        set({ activeEffects: stillActive });
+      }
+    },
+    
+    hasEffect: (type, target) => {
+      const { activeEffects } = get();
+      return activeEffects.some(e => e.type === type && e.target === target);
+    },
+    
+    triggerScreenShake: (intensity) => {
+      set({ screenShake: intensity });
+      setTimeout(() => set({ screenShake: 0 }), 100);
+    },
+    
+    triggerHitFlash: (paddle) => {
+      set({ hitFlash: { paddle, time: Date.now() } });
+      setTimeout(() => set({ hitFlash: null }), 150);
+    },
+    
+    clearVisualEffects: () => {
+      set({ screenShake: 0, hitFlash: null });
     },
   }))
 );

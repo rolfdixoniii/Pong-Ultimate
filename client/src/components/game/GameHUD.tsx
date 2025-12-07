@@ -2,8 +2,10 @@ import { usePong } from "@/lib/stores/usePong";
 import { useAudio } from "@/lib/stores/useAudio";
 
 export function GameHUD() {
-  const { phase, playerScore, aiScore, winner, round, startGame, startNextRound, resetGame, pauseGame, resumeGame } = usePong();
+  const { phase, playerScore, aiScore, winner, round, combo, maxCombo, activeEffects, startGame, startNextRound, resetGame, pauseGame, resumeGame } = usePong();
   const { isMuted, toggleMute } = useAudio();
+  
+  const playerEffects = activeEffects.filter(e => e.target === "player");
   
   const getDifficultyLabel = (round: number) => {
     if (round === 1) return "Easy";
@@ -12,6 +14,24 @@ export function GameHUD() {
     if (round === 4) return "Expert";
     if (round === 5) return "Master";
     return "Legendary";
+  };
+  
+  const getEffectLabel = (type: string) => {
+    switch (type) {
+      case "bigPaddle": return "BIG PADDLE";
+      case "slowBall": return "SLOW BALL";
+      case "speedBoost": return "SPEED BOOST";
+      default: return type.toUpperCase();
+    }
+  };
+  
+  const getEffectColor = (type: string) => {
+    switch (type) {
+      case "bigPaddle": return "text-green-400";
+      case "slowBall": return "text-orange-400";
+      case "speedBoost": return "text-pink-400";
+      default: return "text-white";
+    }
   };
   
   return (
@@ -35,9 +55,33 @@ export function GameHUD() {
             </div>
           </div>
           
+          {combo > 1 && (
+            <div className="absolute top-32 md:top-40 left-1/2 -translate-x-1/2 text-center animate-pulse">
+              <div className="text-2xl md:text-4xl font-bold text-yellow-400">
+                {combo}x COMBO!
+              </div>
+            </div>
+          )}
+          
+          {playerEffects.length > 0 && (
+            <div className="absolute top-4 left-4 flex flex-col gap-1">
+              {playerEffects.map((effect, i) => (
+                <div 
+                  key={i} 
+                  className={`text-xs md:text-sm font-bold px-2 py-1 bg-black/50 rounded ${getEffectColor(effect.type)}`}
+                >
+                  {getEffectLabel(effect.type)}
+                </div>
+              ))}
+            </div>
+          )}
+          
           <div className="absolute bottom-28 md:bottom-8 left-1/2 -translate-x-1/2 text-center hidden md:block">
             <div className="text-gray-400 text-sm">
               W / Arrow Up - Move Up | S / Arrow Down - Move Down
+            </div>
+            <div className="text-gray-500 text-xs mt-1">
+              Collect power-ups by hitting them with the ball!
             </div>
           </div>
           
@@ -91,6 +135,7 @@ export function GameHUD() {
               <p className="md:hidden">Touch buttons to move your paddle</p>
               <p>First to 5 points wins!</p>
               <p className="mt-2 text-yellow-500">Win rounds to face harder AI opponents!</p>
+              <p className="mt-1 text-green-400 text-xs md:text-sm">Collect power-ups for special abilities!</p>
             </div>
           </div>
         </div>
@@ -103,9 +148,14 @@ export function GameHUD() {
             <h2 className="text-3xl md:text-5xl font-bold mb-2 md:mb-4" style={{ color: winner === "player" ? "#4fc3f7" : "#ef5350" }}>
               {winner === "player" ? "YOU WIN!" : "AI WINS!"}
             </h2>
-            <div className="text-xl md:text-2xl text-white mb-6 md:mb-8">
+            <div className="text-xl md:text-2xl text-white mb-2">
               Final Score: {playerScore} - {aiScore}
             </div>
+            {maxCombo > 1 && (
+              <div className="text-yellow-400 text-sm md:text-base mb-6 md:mb-8">
+                Best Combo: {maxCombo}x
+              </div>
+            )}
             
             {winner === "player" ? (
               <div className="flex flex-col gap-3 md:gap-4 items-center">
