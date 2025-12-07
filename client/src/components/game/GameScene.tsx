@@ -1,4 +1,4 @@
-import { useRef, useState, useCallback } from "react";
+import { useRef, useState, useCallback, useEffect } from "react";
 import { useFrame } from "@react-three/fiber";
 import { useKeyboardControls } from "@react-three/drei";
 import * as THREE from "three";
@@ -74,13 +74,31 @@ function Ball({ playerPaddleRef, aiPaddleRef, onPositionUpdate }: {
   onPositionUpdate: (pos: THREE.Vector3) => void;
 }) {
   const meshRef = useRef<THREE.Mesh>(null);
-  const velocityRef = useRef(new THREE.Vector3(INITIAL_SPEED, 0, 0));
+  const velocityRef = useRef(new THREE.Vector3(0, 0, 0));
   const { phase, playerScored, aiScored } = usePong();
   const { playHit } = useAudio();
-  const isResettingRef = useRef(false);
+  const scoredRef = useRef(false);
+  const timeoutRef = useRef<number | null>(null);
+  
+  useEffect(() => {
+    scoredRef.current = false;
+    const direction = Math.random() > 0.5 ? 1 : -1;
+    const angle = (Math.random() - 0.5) * Math.PI / 3;
+    velocityRef.current.set(
+      INITIAL_SPEED * direction * Math.cos(angle),
+      0,
+      INITIAL_SPEED * Math.sin(angle)
+    );
+    
+    return () => {
+      if (timeoutRef.current !== null) {
+        clearTimeout(timeoutRef.current);
+      }
+    };
+  }, []);
   
   const resetBall = useCallback((direction: number = 1) => {
-    if (!meshRef.current || isResettingRef.current) return;
+    if (!meshRef.current) return;
     meshRef.current.position.set(0, BALL_RADIUS, 0);
     const angle = (Math.random() - 0.5) * Math.PI / 3;
     velocityRef.current.set(
@@ -88,11 +106,11 @@ function Ball({ playerPaddleRef, aiPaddleRef, onPositionUpdate }: {
       0,
       INITIAL_SPEED * Math.sin(angle)
     );
-    isResettingRef.current = false;
+    scoredRef.current = false;
   }, []);
   
   useFrame(() => {
-    if (!meshRef.current || phase !== "playing" || isResettingRef.current) return;
+    if (!meshRef.current || phase !== "playing" || scoredRef.current) return;
     
     const ball = meshRef.current;
     const velocity = velocityRef.current;
@@ -152,14 +170,14 @@ function Ball({ playerPaddleRef, aiPaddleRef, onPositionUpdate }: {
       }
     }
     
-    if (ball.position.x < -COURT_WIDTH / 2 - 1) {
-      isResettingRef.current = true;
+    if (ball.position.x < -COURT_WIDTH / 2 - 1 && !scoredRef.current) {
+      scoredRef.current = true;
       aiScored();
-      setTimeout(() => resetBall(-1), 500);
-    } else if (ball.position.x > COURT_WIDTH / 2 + 1) {
-      isResettingRef.current = true;
+      timeoutRef.current = window.setTimeout(() => resetBall(-1), 500);
+    } else if (ball.position.x > COURT_WIDTH / 2 + 1 && !scoredRef.current) {
+      scoredRef.current = true;
       playerScored();
-      setTimeout(() => resetBall(1), 500);
+      timeoutRef.current = window.setTimeout(() => resetBall(1), 500);
     }
   });
   
