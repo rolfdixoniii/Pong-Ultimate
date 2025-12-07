@@ -2,22 +2,36 @@ import { usePong } from "@/lib/stores/usePong";
 import { useAudio } from "@/lib/stores/useAudio";
 
 export function GameHUD() {
-  const { phase, playerScore, aiScore, winner, startGame, resetGame, pauseGame, resumeGame } = usePong();
+  const { phase, playerScore, aiScore, winner, round, startGame, startNextRound, resetGame, pauseGame, resumeGame } = usePong();
   const { isMuted, toggleMute } = useAudio();
+  
+  const getDifficultyLabel = (round: number) => {
+    if (round === 1) return "Easy";
+    if (round === 2) return "Medium";
+    if (round === 3) return "Hard";
+    if (round === 4) return "Expert";
+    if (round === 5) return "Master";
+    return "Legendary";
+  };
   
   return (
     <div className="absolute inset-0 pointer-events-none">
       {phase === "playing" && (
         <>
-          <div className="absolute top-8 left-1/2 -translate-x-1/2 flex items-center gap-8">
-            <div className="text-center">
-              <div className="text-sm text-cyan-400 mb-1">PLAYER</div>
-              <div className="text-6xl font-bold text-cyan-400">{playerScore}</div>
+          <div className="absolute top-8 left-1/2 -translate-x-1/2 flex flex-col items-center">
+            <div className="text-sm text-yellow-400 mb-2 font-semibold">
+              ROUND {round} - {getDifficultyLabel(round)}
             </div>
-            <div className="text-4xl text-gray-500">-</div>
-            <div className="text-center">
-              <div className="text-sm text-red-400 mb-1">AI</div>
-              <div className="text-6xl font-bold text-red-400">{aiScore}</div>
+            <div className="flex items-center gap-8">
+              <div className="text-center">
+                <div className="text-sm text-cyan-400 mb-1">PLAYER</div>
+                <div className="text-6xl font-bold text-cyan-400">{playerScore}</div>
+              </div>
+              <div className="text-4xl text-gray-500">-</div>
+              <div className="text-center">
+                <div className="text-sm text-red-400 mb-1">AI</div>
+                <div className="text-6xl font-bold text-red-400">{aiScore}</div>
+              </div>
             </div>
           </div>
           
@@ -39,7 +53,8 @@ export function GameHUD() {
       {phase === "paused" && (
         <div className="absolute inset-0 flex items-center justify-center bg-black/70 pointer-events-auto">
           <div className="text-center">
-            <h2 className="text-4xl font-bold text-white mb-8">PAUSED</h2>
+            <h2 className="text-4xl font-bold text-white mb-2">PAUSED</h2>
+            <div className="text-yellow-400 mb-8">Round {round} - {getDifficultyLabel(round)}</div>
             <div className="flex gap-4 justify-center">
               <button 
                 onClick={resumeGame}
@@ -74,6 +89,7 @@ export function GameHUD() {
             <div className="mt-8 text-gray-500">
               <p>Use W/S or Arrow Keys to move your paddle</p>
               <p>First to 5 points wins!</p>
+              <p className="mt-2 text-yellow-500">Win rounds to face harder AI opponents!</p>
             </div>
           </div>
         </div>
@@ -82,18 +98,51 @@ export function GameHUD() {
       {phase === "gameOver" && (
         <div className="absolute inset-0 flex items-center justify-center bg-black/80 pointer-events-auto">
           <div className="text-center">
+            <div className="text-yellow-400 text-lg mb-2">Round {round} - {getDifficultyLabel(round)}</div>
             <h2 className="text-5xl font-bold mb-4" style={{ color: winner === "player" ? "#4fc3f7" : "#ef5350" }}>
               {winner === "player" ? "YOU WIN!" : "AI WINS!"}
             </h2>
             <div className="text-2xl text-white mb-8">
               Final Score: {playerScore} - {aiScore}
             </div>
-            <button 
-              onClick={resetGame}
-              className="px-12 py-4 bg-cyan-600 hover:bg-cyan-500 text-white text-2xl font-bold rounded-lg transition-colors"
-            >
-              PLAY AGAIN
-            </button>
+            
+            {winner === "player" ? (
+              <div className="flex flex-col gap-4 items-center">
+                <button 
+                  onClick={startNextRound}
+                  className="px-12 py-4 bg-yellow-600 hover:bg-yellow-500 text-white text-2xl font-bold rounded-lg transition-colors"
+                >
+                  NEXT ROUND
+                </button>
+                <p className="text-yellow-400 text-sm">
+                  Round {round + 1} - {getDifficultyLabel(round + 1)} difficulty awaits!
+                </p>
+                <button 
+                  onClick={resetGame}
+                  className="px-8 py-2 bg-gray-600 hover:bg-gray-500 text-white text-lg rounded-lg transition-colors"
+                >
+                  Back to Menu
+                </button>
+              </div>
+            ) : (
+              <div className="flex flex-col gap-4 items-center">
+                <button 
+                  onClick={startGame}
+                  className="px-12 py-4 bg-cyan-600 hover:bg-cyan-500 text-white text-2xl font-bold rounded-lg transition-colors"
+                >
+                  TRY AGAIN
+                </button>
+                <p className="text-gray-400 text-sm">
+                  Restart from Round 1
+                </p>
+                <button 
+                  onClick={resetGame}
+                  className="px-8 py-2 bg-gray-600 hover:bg-gray-500 text-white text-lg rounded-lg transition-colors"
+                >
+                  Back to Menu
+                </button>
+              </div>
+            )}
           </div>
         </div>
       )}
