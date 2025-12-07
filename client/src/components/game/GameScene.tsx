@@ -13,15 +13,22 @@ const BALL_RADIUS = 0.3;
 const INITIAL_SPEED = 0.12;
 const MAX_SPEED = 0.25;
 const SPEED_INCREMENT = 0.01;
+const CURVE_STRENGTH = 0.003;
+const CURVE_DECAY = 0.98;
 
-function PlayerPaddle({ paddleRef }: { paddleRef: React.RefObject<THREE.Mesh> }) {
+function PlayerPaddle({ paddleRef, onVelocityUpdate }: { 
+  paddleRef: React.RefObject<THREE.Mesh>;
+  onVelocityUpdate: (velocity: number) => void;
+}) {
   const [, getKeys] = useKeyboardControls();
   const speed = 0.15;
   const maxZ = COURT_DEPTH / 2 - PADDLE_DEPTH / 2 - 0.5;
+  const lastZRef = useRef(0);
   
   useFrame(() => {
     if (!paddleRef.current) return;
     const { forward, backward } = getKeys();
+    const prevZ = paddleRef.current.position.z;
     
     if (forward) {
       paddleRef.current.position.z = Math.max(paddleRef.current.position.z - speed, -maxZ);
@@ -29,6 +36,10 @@ function PlayerPaddle({ paddleRef }: { paddleRef: React.RefObject<THREE.Mesh> })
     if (backward) {
       paddleRef.current.position.z = Math.min(paddleRef.current.position.z + speed, maxZ);
     }
+    
+    const velocityZ = paddleRef.current.position.z - prevZ;
+    onVelocityUpdate(velocityZ);
+    lastZRef.current = paddleRef.current.position.z;
   });
   
   return (
@@ -39,12 +50,17 @@ function PlayerPaddle({ paddleRef }: { paddleRef: React.RefObject<THREE.Mesh> })
   );
 }
 
-function AIPaddle({ paddleRef, ballPosition }: { paddleRef: React.RefObject<THREE.Mesh>; ballPosition: THREE.Vector3 }) {
+function AIPaddle({ paddleRef, ballPosition, onVelocityUpdate }: { 
+  paddleRef: React.RefObject<THREE.Mesh>; 
+  ballPosition: THREE.Vector3;
+  onVelocityUpdate: (velocity: number) => void;
+}) {
   const aiSpeed = 0.08;
   const maxZ = COURT_DEPTH / 2 - PADDLE_DEPTH / 2 - 0.5;
   
   useFrame(() => {
     if (!paddleRef.current) return;
+    const prevZ = paddleRef.current.position.z;
     
     const targetZ = ballPosition.z;
     const currentZ = paddleRef.current.position.z;
@@ -58,6 +74,9 @@ function AIPaddle({ paddleRef, ballPosition }: { paddleRef: React.RefObject<THRE
         maxZ
       );
     }
+    
+    const velocityZ = paddleRef.current.position.z - prevZ;
+    onVelocityUpdate(velocityZ);
   });
   
   return (
@@ -68,13 +87,16 @@ function AIPaddle({ paddleRef, ballPosition }: { paddleRef: React.RefObject<THRE
   );
 }
 
-function Ball({ playerPaddleRef, aiPaddleRef, onPositionUpdate }: {
+function Ball({ playerPaddleRef, aiPaddleRef, onPositionUpdate, playerPaddleVelocity, aiPaddleVelocity }: {
   playerPaddleRef: React.RefObject<THREE.Mesh>;
   aiPaddleRef: React.RefObject<THREE.Mesh>;
   onPositionUpdate: (pos: THREE.Vector3) => void;
+  playerPaddleVelocity: number;
+  aiPaddleVelocity: number;
 }) {
   const meshRef = useRef<THREE.Mesh>(null);
   const velocityRef = useRef(new THREE.Vector3(0, 0, 0));
+  const curveRef = useRef(0);
   const { phase, playerScored, aiScored } = usePong();
   const { playHit } = useAudio();
   const scoredRef = useRef(false);
@@ -82,6 +104,7 @@ function Ball({ playerPaddleRef, aiPaddleRef, onPositionUpdate }: {
   
   useEffect(() => {
     scoredRef.current = false;
+    curveRef.current = 0;
     const direction = Math.random() > 0.5 ? 1 : -1;
     const angle = (Math.random() - 0.5) * Math.PI / 3;
     velocityRef.current.set(
@@ -106,6 +129,7 @@ function Ball({ playerPaddleRef, aiPaddleRef, onPositionUpdate }: {
       0,
       INITIAL_SPEED * Math.sin(angle)
     );
+    curveRef.current = 0;
     scoredRef.current = false;
   }, []);
   
@@ -115,12 +139,16 @@ function Ball({ playerPaddleRef, aiPaddleRef, onPositionUpdate }: {
     const ball = meshRef.current;
     const velocity = velocityRef.current;
     
+    velocity.z += curveRef.current;
+    curveRef.current *= CURVE_DECAY;
+    
     ball.position.add(velocity);
     onPositionUpdate(ball.position.clone());
     
     const maxZ = COURT_DEPTH / 2 - BALL_RADIUS;
     if (ball.position.z > maxZ || ball.position.z < -maxZ) {
       velocity.z *= -1;
+      curveRef.current *= -1;
       ball.position.z = THREE.MathUtils.clamp(ball.position.z, -maxZ, maxZ);
       playHit();
     }
@@ -139,6 +167,8 @@ function Ball({ playerPaddleRef, aiPaddleRef, onPositionUpdate }: {
         velocity.x = Math.abs(velocity.x);
         const hitOffset = (ball.position.z - paddle.position.z) / (PADDLE_DEPTH / 2);
         velocity.z += hitOffset * 0.05;
+        
+        curveRef.current = playerPaddleVelocity * CURVE_STRENGTH * 10;
         
         const currentSpeed = velocity.length();
         const newSpeed = Math.min(currentSpeed + SPEED_INCREMENT, MAX_SPEED);
@@ -160,6 +190,8 @@ function Ball({ playerPaddleRef, aiPaddleRef, onPositionUpdate }: {
         velocity.x = -Math.abs(velocity.x);
         const hitOffset = (ball.position.z - paddle.position.z) / (PADDLE_DEPTH / 2);
         velocity.z += hitOffset * 0.05;
+        
+        curveRef.current = aiPaddleVelocity * CURVE_STRENGTH * 10;
         
         const currentSpeed = velocity.length();
         const newSpeed = Math.min(currentSpeed + SPEED_INCREMENT, MAX_SPEED);
@@ -197,6 +229,8 @@ export function GameScene() {
   const playerPaddleRef = useRef<THREE.Mesh>(null);
   const aiPaddleRef = useRef<THREE.Mesh>(null);
   const [ballPosition, setBallPosition] = useState(new THREE.Vector3(0, 0.3, 0));
+  const [playerPaddleVelocity, setPlayerPaddleVelocity] = useState(0);
+  const [aiPaddleVelocity, setAiPaddleVelocity] = useState(0);
   const { phase } = usePong();
   
   const handleBallPositionUpdate = useCallback((pos: THREE.Vector3) => {
@@ -206,14 +240,23 @@ export function GameScene() {
   return (
     <group>
       <Court />
-      <PlayerPaddle paddleRef={playerPaddleRef} />
-      <AIPaddle paddleRef={aiPaddleRef} ballPosition={ballPosition} />
+      <PlayerPaddle 
+        paddleRef={playerPaddleRef} 
+        onVelocityUpdate={setPlayerPaddleVelocity}
+      />
+      <AIPaddle 
+        paddleRef={aiPaddleRef} 
+        ballPosition={ballPosition}
+        onVelocityUpdate={setAiPaddleVelocity}
+      />
       
       {phase === "playing" && (
         <Ball 
           playerPaddleRef={playerPaddleRef}
           aiPaddleRef={aiPaddleRef}
           onPositionUpdate={handleBallPositionUpdate}
+          playerPaddleVelocity={playerPaddleVelocity}
+          aiPaddleVelocity={aiPaddleVelocity}
         />
       )}
     </group>

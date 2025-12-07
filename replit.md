@@ -38,6 +38,7 @@ server/
 - **Keyboard Controls**: W/Arrow Up to move up, S/Arrow Down to move down
 - **AI Opponent**: Tracks ball position with adjustable difficulty
 - **Ball Physics**: Increases speed on paddle hits, bounces off walls
+- **Ball Curving**: Move your paddle while hitting to curve the ball! The ball will curve in the direction you're moving
 - **Scoring**: First to 5 points wins
 - **Sound Effects**: Hit sounds on collisions (muted by default)
 - **Game States**: Menu, Playing, Paused, Game Over
