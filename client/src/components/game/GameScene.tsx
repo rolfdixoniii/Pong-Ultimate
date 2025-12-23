@@ -376,7 +376,7 @@ function Ball({ playerPaddleRef, aiPaddleRef, playerPaddleVelocity, aiPaddleVelo
   
   return (
     <mesh ref={meshRef} position={[0, BALL_RADIUS, 0]} castShadow>
-        <sphereGeometry args={[BALL_RADIUS, 16, 16]} />
+        <sphereGeometry args={[BALL_RADIUS, 32, 32]} />
         <meshStandardMaterial 
           color="#ffffff" 
           emissive="#ffffff" 

@@ -14,7 +14,7 @@ const controls = [
 
 function App() {
   const [showCanvas, setShowCanvas] = useState(false);
-  const [dpr, setDpr] = useState(1.5);
+  const [dpr, setDpr] = useState(2);
 
   useEffect(() => {
     setShowCanvas(true);
@@ -33,7 +33,7 @@ function App() {
             }}
             dpr={dpr}
             gl={{
-              antialias: false,
+              antialias: true,
               powerPreference: "high-performance",
               stencil: false,
               depth: true,
