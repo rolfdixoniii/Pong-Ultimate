@@ -63,12 +63,19 @@ export function MainMenu() {
     
     return (
       <div className="absolute inset-0 flex flex-col items-center justify-center bg-gradient-to-b from-gray-900 to-black pointer-events-auto px-4">
-        <div className="text-center mb-6">
+        <button 
+          onClick={() => setMenuState("main")}
+          className="absolute top-4 md:top-8 left-4 md:left-8 px-4 py-2 bg-gray-600 hover:bg-gray-500 active:bg-gray-400 text-white text-sm md:text-base font-bold rounded-lg transition-colors"
+        >
+          ← BACK
+        </button>
+        
+        <div className="text-center mb-6 mt-16 md:mt-0">
           <h1 className="text-3xl md:text-5xl font-bold text-white mb-1">PADDLE SKINS</h1>
           <p className="text-gray-400 text-sm md:text-base">Unlock skins by winning rounds! ({unlockedSkins.length}/{allSkins.length})</p>
         </div>
         
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8 max-w-2xl overflow-y-auto max-h-[60vh]">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8 max-w-2xl overflow-y-auto max-h-[50vh]">
           {allSkins.map((skin) => {
             const isUnlocked = unlockedSkins.includes(skin.id);
             const isPlayerSelected = playerSkin === skin.id;
@@ -134,13 +141,6 @@ export function MainMenu() {
             );
           })}
         </div>
-        
-        <button 
-          onClick={() => setMenuState("main")}
-          className="px-8 py-3 bg-gray-600 hover:bg-gray-500 active:bg-gray-400 text-white text-lg font-bold rounded-lg transition-colors"
-        >
-          BACK
-        </button>
       </div>
     );
   }
@@ -148,6 +148,13 @@ export function MainMenu() {
   if (menuState === "settings") {
     return (
       <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-b from-gray-900 to-black pointer-events-auto px-4">
+        <button 
+          onClick={() => setMenuState("main")}
+          className="absolute top-4 md:top-8 left-4 md:left-8 px-4 py-2 bg-gray-600 hover:bg-gray-500 active:bg-gray-400 text-white text-sm md:text-base font-bold rounded-lg transition-colors"
+        >
+          ← BACK
+        </button>
+        
         <div className="text-center">
           <h1 className="text-3xl md:text-5xl font-bold text-white mb-8">SETTINGS</h1>
           
@@ -170,13 +177,6 @@ export function MainMenu() {
               <p>• Build combos for higher scores</p>
             </div>
           </div>
-          
-          <button 
-            onClick={() => setMenuState("main")}
-            className="px-8 py-3 bg-gray-600 hover:bg-gray-500 active:bg-gray-400 text-white text-lg font-bold rounded-lg transition-colors"
-          >
-            BACK
-          </button>
         </div>
       </div>
     );
