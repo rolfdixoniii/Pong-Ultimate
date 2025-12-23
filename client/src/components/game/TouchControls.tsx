@@ -42,7 +42,7 @@ export function TouchControls() {
   };
 
   return (
-    <div className="absolute bottom-0 left-0 right-0 flex justify-between items-end p-4 pointer-events-none z-50">
+    <div className="absolute bottom-6 md:bottom-8 left-4 right-4 flex justify-between items-end pointer-events-none z-50">
       <div className="flex flex-col gap-3 pointer-events-auto">
         <button
           onTouchStart={handleTouchStart("up")}
@@ -68,7 +68,7 @@ export function TouchControls() {
         </button>
       </div>
       
-      <div className="text-gray-400 text-xs text-center mb-4 px-4">
+      <div className="text-gray-400 text-xs text-center px-4">
         <p>Touch buttons to move</p>
       </div>
     </div>
