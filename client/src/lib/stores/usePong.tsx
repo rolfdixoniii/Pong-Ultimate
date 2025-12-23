@@ -2,6 +2,7 @@ import { create } from "zustand";
 import { subscribeWithSelector } from "zustand/middleware";
 
 export type GamePhase = "menu" | "playing" | "paused" | "gameOver";
+export type MenuState = "main" | "skins" | "settings";
 
 export type PowerUpType = "bigPaddle" | "slowBall" | "multiball" | "speedBoost";
 
@@ -54,6 +55,7 @@ function getDifficultyForRound(round: number): DifficultySettings {
 
 interface PongState {
   phase: GamePhase;
+  menuState: MenuState;
   playerScore: number;
   aiScore: number;
   winningScore: number;
@@ -71,6 +73,7 @@ interface PongState {
   screenShake: number;
   hitFlash: { paddle: "player" | "ai"; time: number } | null;
   
+  setMenuState: (state: MenuState) => void;
   startGame: () => void;
   startNextRound: () => void;
   pauseGame: () => void;
@@ -98,6 +101,7 @@ const POWER_UP_TYPES: PowerUpType[] = ["bigPaddle", "slowBall", "speedBoost"];
 export const usePong = create<PongState>()(
   subscribeWithSelector((set, get) => ({
     phase: "menu",
+    menuState: "main",
     playerScore: 0,
     aiScore: 0,
     winningScore: 5,
@@ -114,6 +118,8 @@ export const usePong = create<PongState>()(
     
     screenShake: 0,
     hitFlash: null,
+    
+    setMenuState: (menuState: MenuState) => set({ menuState }),
     
     startGame: () => {
       const difficulty = getDifficultyForRound(1);
@@ -166,7 +172,8 @@ export const usePong = create<PongState>()(
     
     resetGame: () => {
       set({ 
-        phase: "menu", 
+        phase: "menu",
+        menuState: "main", 
         playerScore: 0, 
         aiScore: 0,
         winner: null,
