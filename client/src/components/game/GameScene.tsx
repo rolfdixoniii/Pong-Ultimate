@@ -1,6 +1,6 @@
 import { useRef, useCallback, useEffect, useMemo } from "react";
 import { useFrame } from "@react-three/fiber";
-import { useKeyboardControls, Trail } from "@react-three/drei";
+import { useKeyboardControls } from "@react-three/drei";
 import * as THREE from "three";
 import { Court, COURT_WIDTH, COURT_DEPTH } from "./Court";
 import { usePong } from "@/lib/stores/usePong";
@@ -27,8 +27,8 @@ function PlayerPaddle({ paddleRef, onVelocityUpdate }: {
   const hasBigPaddle = usePong(state => state.hasEffect("bigPaddle", "player"));
   const hitFlash = usePong(state => state.hitFlash);
   
-  const baseSpeed = 0.15;
-  const speed = hasSpeedBoost ? baseSpeed * 1.5 : baseSpeed;
+  const baseSpeed = 0.35;
+  const speed = hasSpeedBoost ? baseSpeed * 1.8 : baseSpeed;
   const paddleScale = hasBigPaddle ? 1.5 : 1;
   const maxZ = COURT_DEPTH / 2 - (PADDLE_DEPTH * paddleScale) / 2 - 0.5;
   const lastZRef = useRef(0);
@@ -246,7 +246,7 @@ function Ball({ playerPaddleRef, aiPaddleRef, playerPaddleVelocity, aiPaddleVelo
     const ball = meshRef.current;
     const velocity = velocityRef.current;
     
-    const speedMultiplier = hasSlowBall ? 0.7 : 1;
+    const speedMultiplier = hasSlowBall ? 0.85 : 1;
     
     velocity.z += curveRef.current;
     curveRef.current *= CURVE_DECAY;
@@ -366,13 +366,7 @@ function Ball({ playerPaddleRef, aiPaddleRef, playerPaddleVelocity, aiPaddleVelo
   });
   
   return (
-    <Trail
-      width={1}
-      length={8}
-      color="#ffffff"
-      attenuation={(t) => t * t}
-    >
-      <mesh ref={meshRef} position={[0, BALL_RADIUS, 0]} castShadow>
+    <mesh ref={meshRef} position={[0, BALL_RADIUS, 0]} castShadow>
         <sphereGeometry args={[BALL_RADIUS, 16, 16]} />
         <meshStandardMaterial 
           color="#ffffff" 
@@ -380,7 +374,6 @@ function Ball({ playerPaddleRef, aiPaddleRef, playerPaddleVelocity, aiPaddleVelo
           emissiveIntensity={0.8} 
         />
       </mesh>
-    </Trail>
   );
 }
 

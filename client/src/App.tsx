@@ -25,7 +25,6 @@ function App() {
       {showCanvas && (
         <KeyboardControls map={controls}>
           <Canvas
-            shadows
             camera={{
               position: [0, 15, 18],
               fov: 50,
@@ -34,7 +33,7 @@ function App() {
             }}
             dpr={dpr}
             gl={{
-              antialias: true,
+              antialias: false,
               powerPreference: "high-performance",
               stencil: false,
               depth: true,
@@ -48,17 +47,10 @@ function App() {
             
             <color attach="background" args={["#0a0a0f"]} />
             
-            <ambientLight intensity={0.4} />
+            <ambientLight intensity={0.5} />
             <directionalLight 
               position={[10, 20, 5]} 
-              intensity={1.2} 
-              castShadow
-              shadow-mapSize={[1024, 1024]}
-              shadow-camera-far={50}
-              shadow-camera-left={-15}
-              shadow-camera-right={15}
-              shadow-camera-top={15}
-              shadow-camera-bottom={-15}
+              intensity={1.3}
             />
             <pointLight position={[-10, 10, -10]} intensity={0.6} color="#4fc3f7" />
             <pointLight position={[10, 10, -10]} intensity={0.6} color="#ef5350" />

@@ -29,12 +29,12 @@ export interface DifficultySettings {
 }
 
 const BASE_DIFFICULTY: DifficultySettings = {
-  aiSpeed: 0.08,
-  aiReactionDelay: 0.15,
-  aiPrediction: 0,
-  ballInitialSpeed: 0.12,
-  ballMaxSpeed: 0.25,
-  ballSpeedIncrement: 0.01,
+  aiSpeed: 0.25,
+  aiReactionDelay: 0.08,
+  aiPrediction: 0.3,
+  ballInitialSpeed: 0.3,
+  ballMaxSpeed: 0.6,
+  ballSpeedIncrement: 0.03,
   angleMultiplier: 1,
 };
 
