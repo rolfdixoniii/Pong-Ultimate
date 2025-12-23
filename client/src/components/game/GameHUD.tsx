@@ -1,11 +1,24 @@
 import { usePong } from "@/lib/stores/usePong";
 import { useAudio } from "@/lib/stores/useAudio";
+import { useSkins } from "@/lib/stores/useSkins";
+import { useEffect } from "react";
 
 import { MainMenu } from "./MainMenu";
 
 export function GameHUD() {
   const { phase, playerScore, aiScore, winner, round, combo, maxCombo, activeEffects, startGame, startNextRound, resetGame, pauseGame, resumeGame, menuState } = usePong();
   const { isMuted, toggleMute } = useAudio();
+  const { unlockedSkins, unlockSkin } = useSkins();
+  
+  useEffect(() => {
+    if (winner === "player" && phase === "gameOver") {
+      const SKIN_UNLOCK_ORDER = ["neon", "chrome", "fire", "ice"] as const;
+      const nextSkinIndex = unlockedSkins.length - 1;
+      if (nextSkinIndex < SKIN_UNLOCK_ORDER.length && !unlockedSkins.includes(SKIN_UNLOCK_ORDER[nextSkinIndex])) {
+        unlockSkin(SKIN_UNLOCK_ORDER[nextSkinIndex]);
+      }
+    }
+  }, [winner, phase, unlockedSkins, unlockSkin]);
   
   const playerEffects = activeEffects.filter(e => e.target === "player");
   

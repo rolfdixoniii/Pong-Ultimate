@@ -62,77 +62,85 @@ export function MainMenu() {
     const allSkins = Object.values(paddleSkins);
     
     return (
-      <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-b from-gray-900 to-black pointer-events-auto px-4">
-        <div className="text-center max-w-2xl max-h-screen overflow-y-auto">
+      <div className="absolute inset-0 flex flex-col items-center justify-center bg-gradient-to-b from-gray-900 to-black pointer-events-auto px-4">
+        <div className="text-center mb-6">
           <h1 className="text-3xl md:text-5xl font-bold text-white mb-1">PADDLE SKINS</h1>
-          <p className="text-gray-400 text-sm md:text-base mb-6">Unlock skins by winning rounds!</p>
-          
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
-            {allSkins.map((skin) => {
-              const isUnlocked = unlockedSkins.includes(skin.id);
-              const isPlayerSelected = playerSkin === skin.id;
-              const isAISelected = aiSkin === skin.id;
-              
-              return (
-                <div 
-                  key={skin.id}
-                  className={`p-4 rounded-lg border-2 transition-all ${
-                    isUnlocked 
-                      ? 'border-cyan-500 bg-gray-800 hover:bg-gray-700' 
-                      : 'border-gray-600 bg-gray-900 opacity-50'
-                  }`}
-                >
-                  <h3 className="text-lg md:text-xl font-bold text-white">{skin.name}</h3>
-                  <p className="text-gray-400 text-sm mb-3">{skin.description}</p>
-                  
-                  <div 
-                    className="w-full h-12 rounded mb-3 border border-gray-600"
-                    style={{ 
-                      backgroundColor: skin.color,
-                      boxShadow: `0 0 10px ${skin.emissiveColor}` 
-                    }}
-                  />
-                  
-                  {!isUnlocked && (
-                    <p className="text-yellow-400 text-sm font-semibold">🔒 LOCKED</p>
-                  )}
-                  
-                  {isUnlocked && (
-                    <div className="flex gap-2 justify-center">
-                      <button
-                        onClick={() => selectPlayerSkin(skin.id)}
-                        className={`px-4 py-2 rounded text-sm font-bold transition-colors ${
-                          isPlayerSelected
-                            ? 'bg-cyan-600 text-white'
-                            : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
-                        }`}
-                      >
-                        {isPlayerSelected ? '✓ Player' : 'Player'}
-                      </button>
-                      <button
-                        onClick={() => selectAISkin(skin.id)}
-                        className={`px-4 py-2 rounded text-sm font-bold transition-colors ${
-                          isAISelected
-                            ? 'bg-red-600 text-white'
-                            : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
-                        }`}
-                      >
-                        {isAISelected ? '✓ AI' : 'AI'}
-                      </button>
-                    </div>
-                  )}
-                </div>
-              );
-            })}
-          </div>
-          
-          <button 
-            onClick={() => setMenuState("main")}
-            className="px-8 py-3 bg-gray-600 hover:bg-gray-500 active:bg-gray-400 text-white text-lg font-bold rounded-lg transition-colors"
-          >
-            BACK
-          </button>
+          <p className="text-gray-400 text-sm md:text-base">Unlock skins by winning rounds! ({unlockedSkins.length}/{allSkins.length})</p>
         </div>
+        
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8 max-w-2xl overflow-y-auto max-h-[60vh]">
+          {allSkins.map((skin) => {
+            const isUnlocked = unlockedSkins.includes(skin.id);
+            const isPlayerSelected = playerSkin === skin.id;
+            const isAISelected = aiSkin === skin.id;
+            
+            return (
+              <div 
+                key={skin.id}
+                className={`p-4 rounded-lg border-2 transition-all ${
+                  isUnlocked 
+                    ? 'border-cyan-500 bg-gray-800 hover:bg-gray-700' 
+                    : 'border-gray-600 bg-gray-900 opacity-50'
+                }`}
+              >
+                <h3 className="text-lg md:text-xl font-bold text-white">{skin.name}</h3>
+                <p className="text-gray-400 text-sm mb-3">{skin.description}</p>
+                
+                <div 
+                  className="w-full h-12 rounded mb-3 border border-gray-600"
+                  style={{ 
+                    backgroundColor: skin.color,
+                    boxShadow: `0 0 10px ${skin.emissiveColor}` 
+                  }}
+                />
+                
+                {!isUnlocked && (
+                  <div className="flex flex-col items-center">
+                    <p className="text-yellow-400 text-sm font-semibold mb-2">🔒 LOCKED</p>
+                    <button
+                      onClick={() => unlockSkin(skin.id)}
+                      className="px-3 py-1 text-xs bg-yellow-600 hover:bg-yellow-500 active:bg-yellow-400 text-white font-bold rounded transition-colors"
+                    >
+                      UNLOCK
+                    </button>
+                  </div>
+                )}
+                
+                {isUnlocked && (
+                  <div className="flex gap-2 justify-center">
+                    <button
+                      onClick={() => selectPlayerSkin(skin.id)}
+                      className={`px-4 py-2 rounded text-sm font-bold transition-colors ${
+                        isPlayerSelected
+                          ? 'bg-cyan-600 text-white'
+                          : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+                      }`}
+                    >
+                      {isPlayerSelected ? '✓ Player' : 'Player'}
+                    </button>
+                    <button
+                      onClick={() => selectAISkin(skin.id)}
+                      className={`px-4 py-2 rounded text-sm font-bold transition-colors ${
+                        isAISelected
+                          ? 'bg-red-600 text-white'
+                          : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+                      }`}
+                    >
+                      {isAISelected ? '✓ AI' : 'AI'}
+                    </button>
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
+        
+        <button 
+          onClick={() => setMenuState("main")}
+          className="px-8 py-3 bg-gray-600 hover:bg-gray-500 active:bg-gray-400 text-white text-lg font-bold rounded-lg transition-colors"
+        >
+          BACK
+        </button>
       </div>
     );
   }
