@@ -6,6 +6,7 @@ import { Court, COURT_WIDTH, COURT_DEPTH } from "./Court";
 import { usePong } from "@/lib/stores/usePong";
 import { useAudio } from "@/lib/stores/useAudio";
 import { useTouchControls } from "@/lib/stores/useTouchControls";
+import { useSkins } from "@/lib/stores/useSkins";
 
 const PADDLE_WIDTH = 0.5;
 const PADDLE_HEIGHT = 1;
@@ -26,6 +27,8 @@ function PlayerPaddle({ paddleRef, onVelocityUpdate }: {
   const hasSpeedBoost = usePong(state => state.hasEffect("speedBoost", "player"));
   const hasBigPaddle = usePong(state => state.hasEffect("bigPaddle", "player"));
   const hitFlash = usePong(state => state.hitFlash);
+  const { playerSkin, paddleSkins } = useSkins();
+  const skinData = paddleSkins[playerSkin];
   
   const baseSpeed = 0.35;
   const speed = hasSpeedBoost ? baseSpeed * 1.8 : baseSpeed;
@@ -34,6 +37,8 @@ function PlayerPaddle({ paddleRef, onVelocityUpdate }: {
   const lastZRef = useRef(0);
   
   const isFlashing = hitFlash?.paddle === "player";
+  const paddleColor = isFlashing ? "#ffffff" : skinData?.color || "#4fc3f7";
+  const emissiveColor = isFlashing ? "#ffffff" : skinData?.emissiveColor || "#4fc3f7";
   
   useFrame(() => {
     if (!paddleRef.current) return;
@@ -61,8 +66,8 @@ function PlayerPaddle({ paddleRef, onVelocityUpdate }: {
     <mesh ref={paddleRef} position={[-COURT_WIDTH / 2 + 1, 0.5, 0]} castShadow receiveShadow>
       <boxGeometry args={[PADDLE_WIDTH, PADDLE_HEIGHT, PADDLE_DEPTH]} />
       <meshStandardMaterial 
-        color={isFlashing ? "#ffffff" : "#4fc3f7"} 
-        emissive={isFlashing ? "#ffffff" : "#4fc3f7"} 
+        color={paddleColor} 
+        emissive={emissiveColor} 
         emissiveIntensity={isFlashing ? 1 : 0.3} 
       />
     </mesh>
@@ -77,6 +82,8 @@ function AIPaddle({ paddleRef, onVelocityUpdate }: {
   const hasBigPaddle = usePong(state => state.hasEffect("bigPaddle", "ai"));
   const hasSpeedBoost = usePong(state => state.hasEffect("speedBoost", "ai"));
   const hitFlash = usePong(state => state.hitFlash);
+  const { aiSkin, paddleSkins } = useSkins();
+  const skinData = paddleSkins[aiSkin];
   
   const speedMultiplier = hasSpeedBoost ? 1.5 : 1;
   const paddleScale = hasBigPaddle ? 1.5 : 1;
@@ -85,6 +92,8 @@ function AIPaddle({ paddleRef, onVelocityUpdate }: {
   const targetZRef = useRef(0);
   
   const isFlashing = hitFlash?.paddle === "ai";
+  const paddleColor = isFlashing ? "#ffffff" : skinData?.color || "#ef5350";
+  const emissiveColor = isFlashing ? "#ffffff" : skinData?.emissiveColor || "#ef5350";
   
   useFrame((_, delta) => {
     if (!paddleRef.current) return;
@@ -136,8 +145,8 @@ function AIPaddle({ paddleRef, onVelocityUpdate }: {
     <mesh ref={paddleRef} position={[COURT_WIDTH / 2 - 1, 0.5, 0]} castShadow receiveShadow>
       <boxGeometry args={[PADDLE_WIDTH, PADDLE_HEIGHT, PADDLE_DEPTH]} />
       <meshStandardMaterial 
-        color={isFlashing ? "#ffffff" : "#ef5350"} 
-        emissive={isFlashing ? "#ffffff" : "#ef5350"} 
+        color={paddleColor} 
+        emissive={emissiveColor} 
         emissiveIntensity={isFlashing ? 1 : 0.3} 
       />
     </mesh>
