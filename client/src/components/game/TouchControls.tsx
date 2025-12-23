@@ -42,35 +42,29 @@ export function TouchControls() {
   };
 
   return (
-    <div className="absolute bottom-6 md:bottom-8 left-4 right-4 flex justify-between items-end pointer-events-none z-50">
-      <div className="flex flex-col gap-3 pointer-events-auto">
-        <button
-          onTouchStart={handleTouchStart("up")}
-          onTouchEnd={handleTouchEnd("up")}
-          onMouseDown={handleTouchStart("up")}
-          onMouseUp={handleTouchEnd("up")}
-          onMouseLeave={handleTouchEnd("up")}
-          className="w-20 h-20 bg-cyan-600/80 active:bg-cyan-500 rounded-xl flex items-center justify-center text-white text-3xl font-bold select-none touch-none"
-          style={{ WebkitTouchCallout: 'none', WebkitUserSelect: 'none' }}
-        >
-          ▲
-        </button>
-        <button
-          onTouchStart={handleTouchStart("down")}
-          onTouchEnd={handleTouchEnd("down")}
-          onMouseDown={handleTouchStart("down")}
-          onMouseUp={handleTouchEnd("down")}
-          onMouseLeave={handleTouchEnd("down")}
-          className="w-20 h-20 bg-cyan-600/80 active:bg-cyan-500 rounded-xl flex items-center justify-center text-white text-3xl font-bold select-none touch-none"
-          style={{ WebkitTouchCallout: 'none', WebkitUserSelect: 'none' }}
-        >
-          ▼
-        </button>
-      </div>
-      
-      <div className="text-gray-400 text-xs text-center px-4">
-        <p>Touch buttons to move</p>
-      </div>
+    <div className="fixed bottom-24 left-4 flex flex-col gap-3 pointer-events-none z-50">
+      <button
+        onTouchStart={handleTouchStart("up")}
+        onTouchEnd={handleTouchEnd("up")}
+        onMouseDown={handleTouchStart("up")}
+        onMouseUp={handleTouchEnd("up")}
+        onMouseLeave={handleTouchEnd("up")}
+        className="w-20 h-20 bg-cyan-600/80 active:bg-cyan-500 rounded-xl flex items-center justify-center text-white text-3xl font-bold select-none touch-none pointer-events-auto"
+        style={{ WebkitTouchCallout: 'none', WebkitUserSelect: 'none' }}
+      >
+        ▲
+      </button>
+      <button
+        onTouchStart={handleTouchStart("down")}
+        onTouchEnd={handleTouchEnd("down")}
+        onMouseDown={handleTouchStart("down")}
+        onMouseUp={handleTouchEnd("down")}
+        onMouseLeave={handleTouchEnd("down")}
+        className="w-20 h-20 bg-cyan-600/80 active:bg-cyan-500 rounded-xl flex items-center justify-center text-white text-3xl font-bold select-none touch-none pointer-events-auto"
+        style={{ WebkitTouchCallout: 'none', WebkitUserSelect: 'none' }}
+      >
+        ▼
+      </button>
     </div>
   );
 }
