@@ -413,6 +413,8 @@ export function GameScene() {
   const powerUps = usePong(state => state.powerUps);
   const screenShake = usePong(state => state.screenShake);
   const groupRef = useRef<THREE.Group>(null);
+  const { selectedMap, gameMaps } = useSkins();
+  const currentMap = gameMaps[selectedMap];
   
   const handlePlayerVelocityUpdate = useCallback((velocity: number) => {
     playerPaddleVelocityRef.current = velocity;
@@ -435,7 +437,7 @@ export function GameScene() {
   
   return (
     <group ref={groupRef}>
-      <Court />
+      <Court map={currentMap} />
       <PlayerPaddle 
         paddleRef={playerPaddleRef} 
         onVelocityUpdate={handlePlayerVelocityUpdate}

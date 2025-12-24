@@ -4,7 +4,7 @@ import { useAudio } from "@/lib/stores/useAudio";
 
 export function MainMenu() {
   const { startGame, resetGame } = usePong();
-  const { playerSkin, aiSkin, unlockedSkins, paddleSkins, selectPlayerSkin, selectAISkin, unlockSkin } = useSkins();
+  const { playerSkin, aiSkin, unlockedSkins, paddleSkins, selectPlayerSkin, selectAISkin, unlockSkin, selectedMap, unlockedMaps, gameMaps, selectMap, unlockMap } = useSkins();
   const { isMuted, toggleMute } = useAudio();
   const menuState = usePong(state => state.menuState);
   const setMenuState = usePong(state => state.setMenuState);
@@ -28,7 +28,7 @@ export function MainMenu() {
               onClick={() => setMenuState("skins")}
               className="px-8 md:px-12 py-3 md:py-4 bg-purple-600 hover:bg-purple-500 active:bg-purple-400 text-white text-lg md:text-xl font-bold rounded-lg transition-colors"
             >
-              SKINS
+              SKINS & MAPS
             </button>
             
             <button 
@@ -71,8 +71,23 @@ export function MainMenu() {
         </button>
         
         <div className="text-center mb-6 mt-16 md:mt-0">
-          <h1 className="text-3xl md:text-5xl font-bold text-white mb-1">PADDLE SKINS</h1>
-          <p className="text-gray-400 text-sm md:text-base">Unlock skins by winning rounds! ({unlockedSkins.length}/{allSkins.length})</p>
+          <h1 className="text-3xl md:text-5xl font-bold text-white mb-1">SKINS & MAPS</h1>
+          <p className="text-gray-400 text-sm md:text-base">Customize your game experience</p>
+        </div>
+        
+        <div className="flex gap-4 mb-6 flex-wrap justify-center">
+          <button
+            onClick={() => {}}
+            className="px-6 py-2 bg-cyan-600 hover:bg-cyan-500 active:bg-cyan-400 text-white font-bold rounded transition-colors"
+          >
+            PADDLE SKINS
+          </button>
+          <button
+            onClick={() => setMenuState("maps")}
+            className="px-6 py-2 bg-orange-600 hover:bg-orange-500 active:bg-orange-400 text-white font-bold rounded transition-colors"
+          >
+            MAPS
+          </button>
         </div>
         
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8 max-w-2xl overflow-y-auto max-h-[50vh]">
@@ -136,6 +151,90 @@ export function MainMenu() {
                       {isAISelected ? '✓ AI' : 'AI'}
                     </button>
                   </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    );
+  }
+
+  if (menuState === "maps") {
+    const allMaps = Object.values(gameMaps);
+    
+    return (
+      <div className="absolute inset-0 flex flex-col items-center justify-center bg-gradient-to-b from-gray-900 to-black pointer-events-auto px-4">
+        <button 
+          onClick={() => setMenuState("skins")}
+          className="absolute top-4 md:top-8 left-4 md:left-8 px-4 py-2 bg-gray-600 hover:bg-gray-500 active:bg-gray-400 text-white text-sm md:text-base font-bold rounded-lg transition-colors"
+        >
+          ← BACK
+        </button>
+        
+        <div className="text-center mb-6 mt-16 md:mt-0">
+          <h1 className="text-3xl md:text-5xl font-bold text-white mb-1">GAME MAPS</h1>
+          <p className="text-gray-400 text-sm md:text-base">Unlock maps by winning rounds! ({unlockedMaps.length}/{allMaps.length})</p>
+        </div>
+        
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8 max-w-2xl overflow-y-auto max-h-[50vh]">
+          {allMaps.map((map) => {
+            const isUnlocked = unlockedMaps.includes(map.id);
+            const isSelected = selectedMap === map.id;
+            
+            return (
+              <div 
+                key={map.id}
+                className={`p-4 rounded-lg border-2 transition-all ${
+                  isUnlocked 
+                    ? 'border-orange-500 bg-gray-800 hover:bg-gray-700' 
+                    : 'border-gray-600 bg-gray-900 opacity-50'
+                }`}
+              >
+                <h3 className="text-lg md:text-xl font-bold text-white">{map.name}</h3>
+                <p className="text-gray-400 text-sm mb-3">{map.description}</p>
+                
+                <div className="flex gap-2 mb-3">
+                  <div 
+                    className="flex-1 h-8 rounded border border-gray-600"
+                    style={{ backgroundColor: map.floorColor }}
+                    title="Floor Color"
+                  />
+                  <div 
+                    className="flex-1 h-8 rounded border border-gray-600"
+                    style={{ backgroundColor: map.wallColor }}
+                    title="Wall Color"
+                  />
+                  <div 
+                    className="flex-1 h-8 rounded border border-gray-600"
+                    style={{ backgroundColor: map.accentColor }}
+                    title="Accent Color"
+                  />
+                </div>
+                
+                {!isUnlocked && (
+                  <div className="flex flex-col items-center">
+                    <p className="text-yellow-400 text-sm font-semibold mb-2">🔒 LOCKED</p>
+                    <button
+                      onClick={() => unlockMap(map.id)}
+                      className="px-3 py-1 text-xs bg-yellow-600 hover:bg-yellow-500 active:bg-yellow-400 text-white font-bold rounded transition-colors"
+                    >
+                      UNLOCK
+                    </button>
+                  </div>
+                )}
+                
+                {isUnlocked && (
+                  <button
+                    onClick={() => selectMap(map.id)}
+                    className={`w-full px-4 py-2 rounded text-sm font-bold transition-colors ${
+                      isSelected
+                        ? 'bg-orange-600 text-white'
+                        : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+                    }`}
+                  >
+                    {isSelected ? '✓ SELECTED' : 'SELECT'}
+                  </button>
                 )}
               </div>
             );
