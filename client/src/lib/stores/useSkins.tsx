@@ -26,6 +26,8 @@ export interface GameMap {
   ambientIntensity: number;
   lightColor: string;
   lightIntensity: number;
+  floorTexture?: string;
+  wallTexture?: string;
 }
 
 interface SkinsState {
@@ -100,6 +102,7 @@ const DEFAULT_MAPS: Record<MapStyle, GameMap> = {
     ambientIntensity: 0.8,
     lightColor: "#00ffff",
     lightIntensity: 1.0,
+    floorTexture: "/textures/asphalt.png",
   },
   midnight: {
     id: "midnight",
@@ -126,6 +129,7 @@ const DEFAULT_MAPS: Record<MapStyle, GameMap> = {
     ambientIntensity: 0.9,
     lightColor: "#ff6b20",
     lightIntensity: 1.0,
+    floorTexture: "/textures/sand.jpg",
   },
   ocean: {
     id: "ocean",
@@ -152,6 +156,8 @@ const DEFAULT_MAPS: Record<MapStyle, GameMap> = {
     ambientIntensity: 0.85,
     lightColor: "#39ff14",
     lightIntensity: 0.95,
+    floorTexture: "/textures/grass.png",
+    wallTexture: "/textures/wood.jpg",
   },
 };
 
