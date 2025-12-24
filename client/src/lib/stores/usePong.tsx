@@ -13,6 +13,12 @@ export interface PowerUp {
   active: boolean;
 }
 
+export interface Coin {
+  id: string;
+  position: { x: number; z: number };
+  active: boolean;
+}
+
 export interface ActiveEffect {
   type: PowerUpType;
   expiresAt: number;
@@ -69,6 +75,8 @@ interface PongState {
   
   powerUps: PowerUp[];
   activeEffects: ActiveEffect[];
+  coins: Coin[];
+  coinsCollected: number;
   
   screenShake: number;
   hitFlash: { paddle: "player" | "ai"; time: number } | null;
@@ -90,6 +98,11 @@ interface PongState {
   removePowerUp: (id: string) => void;
   updateEffects: (currentTime: number) => void;
   hasEffect: (type: PowerUpType, target: "player" | "ai") => boolean;
+  
+  spawnCoin: () => void;
+  collectCoin: (id: string) => void;
+  removeCoin: (id: string) => void;
+  addCoins: (amount: number) => void;
   
   triggerScreenShake: (intensity: number) => void;
   triggerHitFlash: (paddle: "player" | "ai") => void;
@@ -115,6 +128,8 @@ export const usePong = create<PongState>()(
     
     powerUps: [],
     activeEffects: [],
+    coins: [],
+    coinsCollected: 0,
     
     screenShake: 0,
     hitFlash: null,
@@ -135,6 +150,8 @@ export const usePong = create<PongState>()(
         lastHitBy: null,
         powerUps: [],
         activeEffects: [],
+        coins: [],
+        coinsCollected: 0,
       });
     },
     
@@ -287,6 +304,40 @@ export const usePong = create<PongState>()(
     
     clearVisualEffects: () => {
       set({ screenShake: 0, hitFlash: null });
+    },
+
+    spawnCoin: () => {
+      const { coins, phase } = get();
+      if (phase !== "playing" || coins.length >= 4) return;
+      
+      const id = `coin-${Date.now()}`;
+      const x = (Math.random() - 0.5) * 12;
+      const z = (Math.random() - 0.5) * 10;
+      
+      set({
+        coins: [...coins, { id, position: { x, z }, active: true }]
+      });
+    },
+
+    collectCoin: (id) => {
+      const { coins, coinsCollected } = get();
+      const coin = coins.find(c => c.id === id);
+      if (!coin) return;
+      
+      set({
+        coins: coins.filter(c => c.id !== id),
+        coinsCollected: coinsCollected + 1
+      });
+    },
+
+    removeCoin: (id) => {
+      const { coins } = get();
+      set({ coins: coins.filter(c => c.id !== id) });
+    },
+
+    addCoins: (amount) => {
+      const { coinsCollected } = get();
+      set({ coinsCollected: coinsCollected + amount });
     },
   }))
 );

@@ -41,9 +41,9 @@ interface SkinsState {
   
   selectPlayerSkin: (skin: PaddleSkinStyle) => void;
   selectAISkin: (skin: PaddleSkinStyle) => void;
-  unlockSkin: (skin: PaddleSkinStyle) => void;
+  unlockSkin: (skin: PaddleSkinStyle, coins: number) => boolean;
   selectMap: (map: MapStyle) => void;
-  unlockMap: (map: MapStyle) => void;
+  unlockMap: (map: MapStyle, coins: number) => boolean;
 }
 
 const DEFAULT_SKINS: Record<PaddleSkinStyle, PaddleSkin> = {
@@ -185,11 +185,13 @@ export const useSkins = create<SkinsState>()(
       }
     },
     
-    unlockSkin: (skin: PaddleSkinStyle) => {
+    unlockSkin: (skin: PaddleSkinStyle, coins: number) => {
       const { unlockedSkins } = get();
-      if (!unlockedSkins.includes(skin)) {
+      if (!unlockedSkins.includes(skin) && coins >= 3) {
         set({ unlockedSkins: [...unlockedSkins, skin] });
+        return true;
       }
+      return false;
     },
 
     selectMap: (map: MapStyle) => {
@@ -199,11 +201,13 @@ export const useSkins = create<SkinsState>()(
       }
     },
 
-    unlockMap: (map: MapStyle) => {
+    unlockMap: (map: MapStyle, coins: number) => {
       const { unlockedMaps } = get();
-      if (!unlockedMaps.includes(map)) {
+      if (!unlockedMaps.includes(map) && coins >= 3) {
         set({ unlockedMaps: [...unlockedMaps, map] });
+        return true;
       }
+      return false;
     },
   }))
 );

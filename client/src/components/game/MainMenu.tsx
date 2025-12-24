@@ -8,6 +8,7 @@ export function MainMenu() {
   const { isMuted, toggleMute } = useAudio();
   const menuState = usePong(state => state.menuState);
   const setMenuState = usePong(state => state.setMenuState);
+  const coinsCollected = usePong(state => state.coinsCollected);
   
   if (menuState === "main") {
     return (
@@ -119,11 +120,17 @@ export function MainMenu() {
                 {!isUnlocked && (
                   <div className="flex flex-col items-center">
                     <p className="text-yellow-400 text-sm font-semibold mb-2">🔒 LOCKED</p>
+                    <p className="text-yellow-300 text-xs mb-2">Cost: 3 coins</p>
                     <button
-                      onClick={() => unlockSkin(skin.id)}
-                      className="px-3 py-1 text-xs bg-yellow-600 hover:bg-yellow-500 active:bg-yellow-400 text-white font-bold rounded transition-colors"
+                      onClick={() => unlockSkin(skin.id, coinsCollected)}
+                      disabled={coinsCollected < 3}
+                      className={`px-3 py-1 text-xs font-bold rounded transition-colors ${
+                        coinsCollected >= 3
+                          ? 'bg-yellow-600 hover:bg-yellow-500 active:bg-yellow-400 text-white'
+                          : 'bg-gray-600 text-gray-400 cursor-not-allowed'
+                      }`}
                     >
-                      UNLOCK
+                      UNLOCK (💰 {coinsCollected}/3)
                     </button>
                   </div>
                 )}
@@ -215,11 +222,17 @@ export function MainMenu() {
                 {!isUnlocked && (
                   <div className="flex flex-col items-center">
                     <p className="text-yellow-400 text-sm font-semibold mb-2">🔒 LOCKED</p>
+                    <p className="text-yellow-300 text-xs mb-2">Cost: 3 coins</p>
                     <button
-                      onClick={() => unlockMap(map.id)}
-                      className="px-3 py-1 text-xs bg-yellow-600 hover:bg-yellow-500 active:bg-yellow-400 text-white font-bold rounded transition-colors"
+                      onClick={() => unlockMap(map.id, coinsCollected)}
+                      disabled={coinsCollected < 3}
+                      className={`px-3 py-1 text-xs font-bold rounded transition-colors ${
+                        coinsCollected >= 3
+                          ? 'bg-yellow-600 hover:bg-yellow-500 active:bg-yellow-400 text-white'
+                          : 'bg-gray-600 text-gray-400 cursor-not-allowed'
+                      }`}
                     >
-                      UNLOCK
+                      UNLOCK (💰 {coinsCollected}/3)
                     </button>
                   </div>
                 )}

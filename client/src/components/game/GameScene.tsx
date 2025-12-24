@@ -153,6 +153,32 @@ function AIPaddle({ paddleRef, onVelocityUpdate }: {
   );
 }
 
+function CoinOrb({ coin }: { coin: { id: string; position: { x: number; z: number } } }) {
+  const meshRef = useRef<THREE.Mesh>(null);
+  const timeRef = useRef(Math.random() * Math.PI * 2);
+  
+  useFrame((_, delta) => {
+    if (!meshRef.current) return;
+    timeRef.current += delta * 4;
+    meshRef.current.position.y = 0.6 + Math.sin(timeRef.current) * 0.25;
+    meshRef.current.rotation.y += delta * 3;
+    meshRef.current.rotation.z += delta * 1.5;
+  });
+  
+  return (
+    <mesh ref={meshRef} position={[coin.position.x, 0.6, coin.position.z]}>
+      <cylinderGeometry args={[0.25, 0.25, 0.15, 16]} />
+      <meshStandardMaterial 
+        color="#ffd700" 
+        emissive="#ffeb3b" 
+        emissiveIntensity={1}
+        metalness={0.8}
+        roughness={0.2}
+      />
+    </mesh>
+  );
+}
+
 function PowerUpOrb({ powerUp }: { powerUp: { id: string; type: string; position: { x: number; z: number } } }) {
   const meshRef = useRef<THREE.Mesh>(null);
   const timeRef = useRef(Math.random() * Math.PI * 2);
@@ -209,6 +235,9 @@ function Ball({ playerPaddleRef, aiPaddleRef, playerPaddleVelocity, aiPaddleVelo
   const collectPowerUp = usePong(state => state.collectPowerUp);
   const updateEffects = usePong(state => state.updateEffects);
   const hasSlowBall = usePong(state => state.hasEffect("slowBall", "player"));
+  const spawnCoin = usePong(state => state.spawnCoin);
+  const coins = usePong(state => state.coins);
+  const collectCoin = usePong(state => state.collectCoin);
   const { playHit } = useAudio();
   const scoredRef = useRef(false);
   const timeoutRef = useRef<number | null>(null);
@@ -325,6 +354,7 @@ function Ball({ playerPaddleRef, aiPaddleRef, playerPaddleVelocity, aiPaddleVelo
           spawnPowerUp();
           lastSpawnRallyRef.current = rallyCountRef.current;
         }
+        if (Math.random() < 0.15) spawnCoin();
       }
     }
     
@@ -358,6 +388,15 @@ function Ball({ playerPaddleRef, aiPaddleRef, playerPaddleVelocity, aiPaddleVelo
         rallyCountRef.current++;
       }
     }
+    
+    coins.forEach(coin => {
+      const dx = ball.position.x - coin.position.x;
+      const dz = ball.position.z - coin.position.z;
+      const dist = Math.sqrt(dx * dx + dz * dz);
+      if (dist < BALL_RADIUS + 0.25) {
+        collectCoin(coin.id);
+      }
+    });
     
     if (ball.position.x < -COURT_WIDTH / 2 - 1 && !scoredRef.current) {
       scoredRef.current = true;
@@ -411,6 +450,7 @@ export function GameScene() {
   const aiPaddleVelocityRef = useRef(0);
   const phase = usePong(state => state.phase);
   const powerUps = usePong(state => state.powerUps);
+  const coins = usePong(state => state.coins);
   const screenShake = usePong(state => state.screenShake);
   const groupRef = useRef<THREE.Group>(null);
   const { selectedMap, gameMaps } = useSkins();
@@ -449,6 +489,10 @@ export function GameScene() {
       
       {powerUps.map(powerUp => (
         <PowerUpOrb key={powerUp.id} powerUp={powerUp} />
+      ))}
+      
+      {coins.map(coin => (
+        <CoinOrb key={coin.id} coin={coin} />
       ))}
       
       {phase === "playing" && (
