@@ -310,7 +310,8 @@ function Ball({ playerPaddleRef, aiPaddleRef, playerPaddleVelocity, aiPaddleVelo
       const dist = Math.sqrt(dx * dx + dz * dz);
       
       if (dist < 0.8) {
-        const collector = velocity.x < 0 ? "player" : "ai";
+        const lastHitter = usePong.getState().lastHitBy;
+        const collector = lastHitter || "player";
         collectPowerUp(powerUp.id, collector);
         triggerScreenShake(0.2);
       }
