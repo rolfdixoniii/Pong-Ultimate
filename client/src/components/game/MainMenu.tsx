@@ -14,6 +14,8 @@ export function MainMenu() {
   const setMenuState = usePong(state => state.setMenuState);
   const { level, coins, stats, spendCoins, getXpProgress } = useProgression();
   const xpProgress = getXpProgress();
+  const gameSpeed = useGameSpeed(state => state.gameSpeed);
+  const setGameSpeed = useGameSpeed(state => state.setGameSpeed);
   
   if (menuState === "main") {
     return (
@@ -314,9 +316,6 @@ export function MainMenu() {
   }
   
   if (menuState === "settings") {
-    const gameSpeed = useGameSpeed(state => state.gameSpeed);
-    const setGameSpeed = useGameSpeed(state => state.setGameSpeed);
-    
     return (
       <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-b from-gray-900 to-black pointer-events-auto px-4">
         <button 
