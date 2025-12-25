@@ -17,8 +17,8 @@ const MAGNUS_STRENGTH = 2.0; // Strength of the curve effect
 const SPIN_DECAY = 0.96; // Air resistance on spin
 const TRAIL_LENGTH = 12;
 
-const ballPositionRef = { current: new THREE.Vector3(0, BALL_RADIUS, 0) };
-const ballVelocityRef = { current: new THREE.Vector3(0, 0, 0) };
+export const globalBallPositionRef = { current: new THREE.Vector3(0, 0, 0) };
+export const globalBallVelocityRef = { current: new THREE.Vector3(0, 0, 0) };
 
 function PlayerPaddle({ paddleRef, onVelocityUpdate }: {
   paddleRef: React.RefObject<THREE.Mesh>;
@@ -142,8 +142,8 @@ function AIPaddle({ paddleRef, onVelocityUpdate }: {
     if (reactionTimerRef.current >= difficulty.aiReactionDelay) {
       reactionTimerRef.current = 0;
 
-      const ballPosition = ballPositionRef.current;
-      const ballVelocity = ballVelocityRef.current;
+      const ballPosition = globalBallPositionRef.current;
+      const ballVelocity = globalBallVelocityRef.current;
 
       let predictedZ = ballPosition.z;
 
@@ -558,8 +558,8 @@ function Ball({ playerPaddleRef, aiPaddleRef, playerPaddleVelocity, aiPaddleVelo
       const stepVelocity = velocity.clone().multiplyScalar(speedMultiplier * frameScale);
       ball.position.add(stepVelocity);
 
-      ballPositionRef.current.copy(ball.position);
-      ballVelocityRef.current.copy(velocity);
+      globalBallPositionRef.current.copy(ball.position);
+      globalBallVelocityRef.current.copy(velocity);
 
       // Wall Collisions
       const maxZ = COURT_DEPTH / 2 - BALL_RADIUS;
@@ -854,7 +854,7 @@ function SmoothCamera() {
   const cameraTarget = useRef(new THREE.Vector3(0, 0, 0));
 
   useFrame(({ camera }: any, delta: number) => {
-    const ballPos = ballPositionRef.current;
+    const ballPos = globalBallPositionRef.current;
     const targetX = ballPos.x * 0.15;
     const targetZ = ballPos.z * 0.08;
 
