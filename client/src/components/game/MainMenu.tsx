@@ -7,38 +7,38 @@ import { useGameSpeed } from "@/lib/stores/useGameSpeed";
 import { AchievementsMenu } from "./AchievementsMenu";
 
 export function MainMenu() {
-  const startGame = usePong(state => state.startGame);
-  const resetGame = usePong(state => state.resetGame);
+  const startGame = usePong((state: any) => state.startGame);
+  const resetGame = usePong((state: any) => state.resetGame);
 
-  const playerSkin = useSkins(state => state.playerSkin);
-  const aiSkin = useSkins(state => state.aiSkin);
-  const unlockedSkins = useSkins(state => state.unlockedSkins);
-  const paddleSkins = useSkins(state => state.paddleSkins);
-  const selectPlayerSkin = useSkins(state => state.selectPlayerSkin);
-  const selectAISkin = useSkins(state => state.selectAISkin);
-  const purchaseSkin = useSkins(state => state.purchaseSkin);
-  const selectedMap = useSkins(state => state.selectedMap);
-  const unlockedMaps = useSkins(state => state.unlockedMaps);
-  const gameMaps = useSkins(state => state.gameMaps);
-  const selectMap = useSkins(state => state.selectMap);
-  const purchaseMap = useSkins(state => state.purchaseMap);
-  const canUnlockSkin = useSkins(state => state.canUnlockSkin);
-  const canUnlockMap = useSkins(state => state.canUnlockMap);
+  const playerSkin = useSkins((state: any) => state.playerSkin);
+  const aiSkin = useSkins((state: any) => state.aiSkin);
+  const unlockedSkins = useSkins((state: any) => state.unlockedSkins);
+  const paddleSkins = useSkins((state: any) => state.paddleSkins);
+  const selectPlayerSkin = useSkins((state: any) => state.selectPlayerSkin);
+  const selectAISkin = useSkins((state: any) => state.selectAISkin);
+  const purchaseSkin = useSkins((state: any) => state.purchaseSkin);
+  const selectedMap = useSkins((state: any) => state.selectedMap);
+  const unlockedMaps = useSkins((state: any) => state.unlockedMaps);
+  const gameMaps = useSkins((state: any) => state.gameMaps);
+  const selectMap = useSkins((state: any) => state.selectMap);
+  const purchaseMap = useSkins((state: any) => state.purchaseMap);
+  const canUnlockSkin = useSkins((state: any) => state.canUnlockSkin);
+  const canUnlockMap = useSkins((state: any) => state.canUnlockMap);
 
-  const isMuted = useAudio(state => state.isMuted);
-  const toggleMute = useAudio(state => state.toggleMute);
+  const isMuted = useAudio((state: any) => state.isMuted);
+  const toggleMute = useAudio((state: any) => state.toggleMute);
 
-  const menuState = usePong(state => state.menuState);
-  const setMenuState = usePong(state => state.setMenuState);
+  const menuState = usePong((state: any) => state.menuState);
+  const setMenuState = usePong((state: any) => state.setMenuState);
 
-  const level = useProgression(state => state.level);
-  const coins = useProgression(state => state.coins);
-  const stats = useProgression(state => state.stats);
-  const spendCoins = useProgression(state => state.spendCoins);
-  const getXpProgress = useProgression(state => state.getXpProgress);
+  const level = useProgression((state: any) => state.level);
+  const coins = useProgression((state: any) => state.coins);
+  const stats = useProgression((state: any) => state.stats);
+  const spendCoins = useProgression((state: any) => state.spendCoins);
+  const getXpProgress = useProgression((state: any) => state.getXpProgress);
   const xpProgress = getXpProgress();
-  const gameSpeed = useGameSpeed(state => state.gameSpeed);
-  const setGameSpeed = useGameSpeed(state => state.setGameSpeed);
+  const gameSpeed = useGameSpeed((state: any) => state.gameSpeed);
+  const setGameSpeed = useGameSpeed((state: any) => state.setGameSpeed);
 
   if (menuState === "main") {
     return (

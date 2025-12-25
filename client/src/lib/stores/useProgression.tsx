@@ -19,27 +19,27 @@ interface ProgressionState {
   level: number;
   coins: number;
   stats: PlayerStats;
-  
+
   pendingRewards: {
     xp: number;
     coins: number;
     levelUp: boolean;
     newLevel: number;
   } | null;
-  
+
   getXpForLevel: (level: number) => number;
   getXpProgress: () => { current: number; required: number; percentage: number };
-  
+
   addXp: (amount: number) => void;
   addCoins: (amount: number) => void;
   spendCoins: (amount: number) => boolean;
-  
+
   recordRoundWin: (round: number, combo: number, pointsScored: number) => void;
   recordRoundLoss: () => void;
   recordGameWin: (round: number) => void;
   recordGameLoss: () => void;
   recordPowerUpCollected: () => void;
-  
+
   clearPendingRewards: () => void;
   resetStats: () => void;
 }
@@ -63,15 +63,15 @@ const initialStats: PlayerStats = {
 
 export const useProgression = create<ProgressionState>()(
   persist(
-    (set, get) => ({
+    (set: any, get: any) => ({
       xp: 0,
       level: 1,
       coins: 0,
       stats: { ...initialStats },
       pendingRewards: null,
-      
+
       getXpForLevel,
-      
+
       getXpProgress: () => {
         const { xp, level } = get();
         const required = getXpForLevel(level);
@@ -85,26 +85,26 @@ export const useProgression = create<ProgressionState>()(
           percentage: Math.min(100, (currentLevelXp / required) * 100),
         };
       },
-      
+
       addXp: (amount: number) => {
         const { xp, level } = get();
         let newXp = xp + amount;
         let newLevel = level;
         let totalXpNeeded = 0;
-        
+
         for (let i = 1; i <= newLevel; i++) {
           totalXpNeeded += getXpForLevel(i);
         }
-        
+
         while (newXp >= totalXpNeeded) {
           newLevel++;
           totalXpNeeded += getXpForLevel(newLevel);
         }
-        
+
         const didLevelUp = newLevel > level;
-        
-        set({ 
-          xp: newXp, 
+
+        set({
+          xp: newXp,
           level: newLevel,
           pendingRewards: didLevelUp ? {
             xp: amount,
@@ -114,39 +114,39 @@ export const useProgression = create<ProgressionState>()(
           } : get().pendingRewards,
         });
       },
-      
+
       addCoins: (amount: number) => {
         const { coins, stats } = get();
-        set({ 
+        set({
           coins: coins + amount,
           stats: { ...stats, totalCoinsEarned: stats.totalCoinsEarned + amount },
         });
       },
-      
+
       spendCoins: (amount: number) => {
         const { coins, stats } = get();
         if (coins < amount) return false;
-        set({ 
+        set({
           coins: coins - amount,
           stats: { ...stats, totalCoinsSpent: stats.totalCoinsSpent + amount },
         });
         return true;
       },
-      
+
       recordRoundWin: (round: number, combo: number, pointsScored: number) => {
         const { stats } = get();
         const baseXp = 50;
         const roundBonus = round * 20;
         const comboBonus = combo * 5;
         const totalXp = baseXp + roundBonus + comboBonus;
-        
+
         const baseCoinReward = 10;
         const roundCoinBonus = round * 5;
         const totalCoins = baseCoinReward + roundCoinBonus;
-        
+
         get().addXp(totalXp);
         get().addCoins(totalCoins);
-        
+
         set({
           stats: {
             ...stats,
@@ -163,13 +163,13 @@ export const useProgression = create<ProgressionState>()(
           },
         });
       },
-      
+
       recordRoundLoss: () => {
         const { stats } = get();
         const consolationXp = 10;
         get().addXp(consolationXp);
       },
-      
+
       recordGameWin: (round: number) => {
         const { stats } = get();
         set({
@@ -181,7 +181,7 @@ export const useProgression = create<ProgressionState>()(
           },
         });
       },
-      
+
       recordGameLoss: () => {
         const { stats } = get();
         set({
@@ -192,7 +192,7 @@ export const useProgression = create<ProgressionState>()(
           },
         });
       },
-      
+
       recordPowerUpCollected: () => {
         const { stats } = get();
         set({
@@ -202,16 +202,16 @@ export const useProgression = create<ProgressionState>()(
           },
         });
       },
-      
+
       clearPendingRewards: () => {
         set({ pendingRewards: null });
       },
-      
+
       resetStats: () => {
-        set({ 
-          xp: 0, 
-          level: 1, 
-          coins: 0, 
+        set({
+          xp: 0,
+          level: 1,
+          coins: 0,
           stats: { ...initialStats },
           pendingRewards: null,
         });

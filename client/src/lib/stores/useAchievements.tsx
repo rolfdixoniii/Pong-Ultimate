@@ -1,7 +1,7 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 
-export type AchievementId = 
+export type AchievementId =
   | "first_victory"
   | "winning_streak_3"
   | "winning_streak_5"
@@ -362,7 +362,7 @@ interface AchievementsState {
   progress: Record<AchievementId, AchievementProgress>;
   pendingNotifications: PendingAchievement[];
   currentStreak: number;
-  
+
   updateProgress: (id: AchievementId, amount: number) => void;
   setProgress: (id: AchievementId, value: number) => void;
   checkAndUnlock: (id: AchievementId) => boolean;
@@ -386,68 +386,74 @@ const initializeProgress = (): Record<AchievementId, AchievementProgress> => {
 
 export const useAchievements = create<AchievementsState>()(
   persist(
-    (set, get) => ({
+    (set: any, get: any) => ({
       progress: initializeProgress(),
       pendingNotifications: [],
       currentStreak: 0,
 
       updateProgress: (id: AchievementId, amount: number) => {
-        const { progress, pendingNotifications } = get();
-        const current = progress[id] || { progress: 0, unlocked: false };
         const achievement = ACHIEVEMENTS[id];
-        
-        if (!achievement || current.unlocked) return;
-        
-        const newProgress = Math.min(current.progress + amount, achievement.maxProgress);
-        const shouldUnlock = newProgress >= achievement.maxProgress;
-        
-        set({
-          progress: {
-            ...progress,
-            [id]: {
-              progress: newProgress,
-              unlocked: shouldUnlock,
-              unlockedAt: shouldUnlock ? Date.now() : undefined,
-            },
-          },
-          pendingNotifications: shouldUnlock 
-            ? [...pendingNotifications, { id, achievement }]
-            : pendingNotifications,
-        });
+        if (!achievement) return;
+
+        const { progress, setProgress } = get();
+        const current = progress[id] || { progress: 0, unlocked: false };
+
+        if (current.unlocked) return;
+
+        return setProgress(id, current.progress + amount);
       },
 
       setProgress: (id: AchievementId, value: number) => {
+        const achievement = ACHIEVEMENTS[id];
+        if (!achievement) return false;
+
         const { progress, pendingNotifications } = get();
         const current = progress[id] || { progress: 0, unlocked: false };
-        const achievement = ACHIEVEMENTS[id];
-        
-        if (!achievement || current.unlocked) return;
-        
+
+        if (current.unlocked) return false;
+
         const newProgress = Math.min(value, achievement.maxProgress);
-        const shouldUnlock = newProgress >= achievement.maxProgress;
-        
+
+        if (newProgress === current.progress && newProgress < achievement.maxProgress) {
+          return false;
+        }
+
+        // Update state first
         set({
           progress: {
             ...progress,
             [id]: {
+              ...current,
               progress: newProgress,
-              unlocked: shouldUnlock,
-              unlockedAt: shouldUnlock ? Date.now() : undefined,
             },
           },
-          pendingNotifications: shouldUnlock 
-            ? [...pendingNotifications, { id, achievement }]
-            : pendingNotifications,
         });
+
+        // Re-get for consistency
+        if (newProgress >= achievement.maxProgress) {
+          const updatedProgress = get().progress;
+          set({
+            progress: {
+              ...updatedProgress,
+              [id]: {
+                ...updatedProgress[id],
+                unlocked: true,
+                unlockedAt: Date.now(),
+              },
+            },
+            pendingNotifications: [...pendingNotifications, { id, achievement }],
+          });
+        }
+        return true;
       },
 
       checkAndUnlock: (id: AchievementId) => {
         const { progress, pendingNotifications } = get();
         const current = progress[id] || { progress: 0, unlocked: false };
         const achievement = ACHIEVEMENTS[id];
-        
+
         if (!achievement || current.unlocked) return false;
-        
+
         if (current.progress >= achievement.maxProgress) {
           set({
             progress: {
@@ -471,7 +477,7 @@ export const useAchievements = create<AchievementsState>()(
 
       getUnlockedCount: () => {
         const { progress } = get();
-        return Object.values(progress).filter(p => p.unlocked).length;
+        return Object.values(progress).filter((p: any) => p.unlocked).length;
       },
 
       getTotalCount: () => {
@@ -486,14 +492,14 @@ export const useAchievements = create<AchievementsState>()(
       popNotification: () => {
         const { pendingNotifications } = get();
         if (pendingNotifications.length === 0) return null;
-        
+
         const [first, ...rest] = pendingNotifications;
         set({ pendingNotifications: rest });
         return first;
       },
 
       incrementStreak: () => {
-        set(state => ({ currentStreak: state.currentStreak + 1 }));
+        set((state: any) => ({ currentStreak: state.currentStreak + 1 }));
       },
 
       resetStreak: () => {
@@ -506,14 +512,14 @@ export const useAchievements = create<AchievementsState>()(
     }),
     {
       name: "pong-achievements",
-      partialize: (state) => ({
+      partialize: (state: any) => ({
         progress: state.progress,
         currentStreak: state.currentStreak,
       }),
-      merge: (persistedState, currentState) => {
+      merge: (persistedState: any, currentState: any) => {
         const persisted = persistedState as Partial<AchievementsState>;
         const mergedProgress = { ...initializeProgress() };
-        
+
         if (persisted?.progress) {
           for (const id of Object.keys(persisted.progress) as AchievementId[]) {
             if (mergedProgress[id] && persisted.progress[id]) {
@@ -521,7 +527,7 @@ export const useAchievements = create<AchievementsState>()(
             }
           }
         }
-        
+
         return {
           ...currentState,
           progress: mergedProgress,

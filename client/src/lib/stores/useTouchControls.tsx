@@ -7,7 +7,7 @@ interface TouchControlsState {
   setMovingDown: (moving: boolean) => void;
 }
 
-export const useTouchControls = create<TouchControlsState>((set) => ({
+export const useTouchControls = create<TouchControlsState>((set: any) => ({
   isMovingUp: false,
   isMovingDown: false,
   setMovingUp: (moving) => set({ isMovingUp: moving }),

@@ -27,12 +27,12 @@ function PlayerPaddle({ paddleRef, onVelocityUpdate }: {
 }) {
   const [, getKeys] = useKeyboardControls();
   const { isMovingUp, isMovingDown } = useTouchControls();
-  const hasSpeedBoost = usePong(state => state.hasEffect("speedBoost", "player"));
-  const hasBigPaddle = usePong(state => state.hasEffect("bigPaddle", "player"));
-  const hitFlash = usePong(state => state.hitFlash);
+  const hasSpeedBoost = usePong((state: any) => state.hasEffect("speedBoost", "player"));
+  const hasBigPaddle = usePong((state: any) => state.hasEffect("bigPaddle", "player"));
+  const hitFlash = usePong((state: any) => state.hitFlash);
   const { playerSkin, paddleSkins } = useSkins();
   const skinData = paddleSkins[playerSkin];
-  const gameSpeedMultiplier = useGameSpeed(state => state.speedMultiplier);
+  const gameSpeedMultiplier = useGameSpeed((state: any) => state.speedMultiplier);
 
   const baseSpeed = 0.35;
   const speed = (hasSpeedBoost ? baseSpeed * 1.8 : baseSpeed) * gameSpeedMultiplier;
@@ -47,7 +47,7 @@ function PlayerPaddle({ paddleRef, onVelocityUpdate }: {
   const paddleColor = isFlashing ? "#ffffff" : skinData?.color || "#4fc3f7";
   const emissiveColor = isFlashing ? "#ffffff" : skinData?.emissiveColor || "#4fc3f7";
 
-  useFrame(({ clock }, delta) => {
+  useFrame(({ clock }: any, delta: number) => {
     if (!paddleRef.current) return;
     const { forward, backward } = getKeys();
     const prevZ = paddleRef.current.position.z;
@@ -105,13 +105,13 @@ function AIPaddle({ paddleRef, onVelocityUpdate }: {
   paddleRef: React.RefObject<THREE.Mesh>;
   onVelocityUpdate: (velocity: number) => void;
 }) {
-  const difficulty = usePong(state => state.difficulty);
-  const hasBigPaddle = usePong(state => state.hasEffect("bigPaddle", "ai"));
-  const hasSpeedBoost = usePong(state => state.hasEffect("speedBoost", "ai"));
-  const hitFlash = usePong(state => state.hitFlash);
+  const difficulty = usePong((state: any) => state.difficulty);
+  const hasBigPaddle = usePong((state: any) => state.hasEffect("bigPaddle", "ai"));
+  const hasSpeedBoost = usePong((state: any) => state.hasEffect("speedBoost", "ai"));
+  const hitFlash = usePong((state: any) => state.hitFlash);
   const { aiSkin, paddleSkins } = useSkins();
   const skinData = paddleSkins[aiSkin];
-  const gameSpeedMultiplier = useGameSpeed(state => state.speedMultiplier);
+  const gameSpeedMultiplier = useGameSpeed((state: any) => state.speedMultiplier);
 
   const speedMultiplier = (hasSpeedBoost ? 1.5 : 1) * gameSpeedMultiplier;
   const paddleScale = hasBigPaddle ? 1.5 : 1;
@@ -125,8 +125,8 @@ function AIPaddle({ paddleRef, onVelocityUpdate }: {
   const paddleColor = isFlashing ? "#ffffff" : skinData?.color || "#ef5350";
   const emissiveColor = isFlashing ? "#ffffff" : skinData?.emissiveColor || "#ef5350";
 
-  useFrame((state, delta) => {
-    const pulse = Math.sin(state.clock.elapsedTime * 3) * 0.15 + 0.35;
+  useFrame(({ clock }: any, delta: number) => {
+    const pulse = Math.sin(clock.elapsedTime * 3) * 0.15 + 0.35;
     if (materialRef.current && !isFlashing) {
       materialRef.current.emissiveIntensity = pulse;
     }
@@ -297,11 +297,11 @@ function Multiball({ id, velocity, playerPaddleRef, aiPaddleRef }: {
 }) {
   const meshRef = useRef<THREE.Mesh>(null);
   const velocityRef = useRef(new THREE.Vector3(velocity.x, 0, velocity.z));
-  const removeMultiball = usePong(state => state.removeMultiball);
-  const playerScored = usePong(state => state.playerScored);
-  const aiScored = usePong(state => state.aiScored);
-  const consumeShield = usePong(state => state.consumeShield);
-  const triggerScreenShake = usePong(state => state.triggerScreenShake);
+  const removeMultiball = usePong((state: any) => state.removeMultiball);
+  const playerScored = usePong((state: any) => state.playerScored);
+  const aiScored = usePong((state: any) => state.aiScored);
+  const consumeShield = usePong((state: any) => state.consumeShield);
+  const triggerScreenShake = usePong((state: any) => state.triggerScreenShake);
   const { playHit } = useAudio();
 
   useEffect(() => {
@@ -402,29 +402,29 @@ function Ball({ playerPaddleRef, aiPaddleRef, playerPaddleVelocity, aiPaddleVelo
   const meshRef = useRef<THREE.Mesh>(null);
   const velocityRef = useRef(new THREE.Vector3(0, 0, 0));
   const curveRef = useRef(0);
-  const phase = usePong(state => state.phase);
-  const difficulty = usePong(state => state.difficulty);
-  const playerScored = usePong(state => state.playerScored);
-  const aiScored = usePong(state => state.aiScored);
-  const incrementCombo = usePong(state => state.incrementCombo);
-  const resetCombo = usePong(state => state.resetCombo);
-  const triggerScreenShake = usePong(state => state.triggerScreenShake);
-  const triggerHitFlash = usePong(state => state.triggerHitFlash);
-  const spawnPowerUp = usePong(state => state.spawnPowerUp);
-  const powerUps = usePong(state => state.powerUps);
-  const collectPowerUp = usePong(state => state.collectPowerUp);
-  const updateEffects = usePong(state => state.updateEffects);
-  const hasSlowBall = usePong(state => state.hasEffect("slowBall", "player"));
-  const spawnCoin = usePong(state => state.spawnCoin);
-  const coins = usePong(state => state.coins);
-  const collectCoin = usePong(state => state.collectCoin);
-  const consumeShield = usePong(state => state.consumeShield);
-  const clearMultiballs = usePong(state => state.clearMultiballs);
-  const incrementPowerHits = usePong(state => state.incrementPowerHits);
-  const triggerSkinPower = usePong(state => state.triggerSkinPower);
-  const activeSkinPower = usePong(state => state.activeSkinPower);
-  const setPredictionLine = usePong(state => state.setPredictionLine);
-  const updateSkinPowers = usePong(state => state.updateSkinPowers);
+  const phase = usePong((state: any) => state.phase);
+  const difficulty = usePong((state: any) => state.difficulty);
+  const playerScored = usePong((state: any) => state.playerScored);
+  const aiScored = usePong((state: any) => state.aiScored);
+  const incrementCombo = usePong((state: any) => state.incrementCombo);
+  const resetCombo = usePong((state: any) => state.resetCombo);
+  const triggerScreenShake = usePong((state: any) => state.triggerScreenShake);
+  const triggerHitFlash = usePong((state: any) => state.triggerHitFlash);
+  const spawnPowerUp = usePong((state: any) => state.spawnPowerUp);
+  const powerUps = usePong((state: any) => state.powerUps);
+  const collectPowerUp = usePong((state: any) => state.collectPowerUp);
+  const updateEffects = usePong((state: any) => state.updateEffects);
+  const hasSlowBall = usePong((state: any) => state.hasEffect("slowBall", "player"));
+  const spawnCoin = usePong((state: any) => state.spawnCoin);
+  const coins = usePong((state: any) => state.coins);
+  const collectCoin = usePong((state: any) => state.collectCoin);
+  const consumeShield = usePong((state: any) => state.consumeShield);
+  const clearMultiballs = usePong((state: any) => state.clearMultiballs);
+  const incrementPowerHits = usePong((state: any) => state.incrementPowerHits);
+  const triggerSkinPower = usePong((state: any) => state.triggerSkinPower);
+  const activeSkinPower = usePong((state: any) => state.activeSkinPower);
+  const setPredictionLine = usePong((state: any) => state.setPredictionLine);
+  const updateSkinPowers = usePong((state: any) => state.updateSkinPowers);
   const { getPlayerPower, getAIPower } = useSkins();
   const { playHit } = useAudio();
   const scoredRef = useRef(false);
@@ -464,7 +464,7 @@ function Ball({ playerPaddleRef, aiPaddleRef, playerPaddleVelocity, aiPaddleVelo
     scoredRef.current = false;
   }, [initializeBall]);
 
-  const gameSpeedMultiplier = useGameSpeed(state => state.speedMultiplier);
+  const gameSpeedMultiplier = useGameSpeed((state: any) => state.speedMultiplier);
 
   useFrame((_, delta) => {
     if (!meshRef.current || phase !== "playing" || scoredRef.current) return;
@@ -710,7 +710,7 @@ function BallTrail() {
         return (
           <mesh
             key={i}
-            ref={(el) => { if (el) trailMeshes.current[i] = el; }}
+            ref={(el: THREE.Mesh | null) => { if (el) trailMeshes.current[i] = el; }}
             position={[0, BALL_RADIUS, 0]}
             geometry={geo}
           >
@@ -754,7 +754,7 @@ function PredictionLine() {
 function SmoothCamera() {
   const cameraTarget = useRef(new THREE.Vector3(0, 0, 0));
 
-  useFrame(({ camera }, delta) => {
+  useFrame(({ camera }: any, delta: number) => {
     const ballPos = ballPositionRef.current;
     const targetX = ballPos.x * 0.15;
     const targetZ = ballPos.z * 0.08;
@@ -776,14 +776,14 @@ export function GameScene() {
   const aiPaddleRef = useRef<THREE.Mesh>(null);
   const playerPaddleVelocityRef = useRef(0);
   const aiPaddleVelocityRef = useRef(0);
-  const phase = usePong(state => state.phase);
-  const powerUps = usePong(state => state.powerUps);
-  const coins = usePong(state => state.coins);
-  const screenShake = usePong(state => state.screenShake);
-  const playerShield = usePong(state => state.playerShield);
-  const aiShield = usePong(state => state.aiShield);
-  const multiballs = usePong(state => state.multiballs);
-  const predictionLine = usePong(state => state.predictionLine);
+  const phase = usePong((state: any) => state.phase);
+  const powerUps = usePong((state: any) => state.powerUps);
+  const coins = usePong((state: any) => state.coins);
+  const screenShake = usePong((state: any) => state.screenShake);
+  const playerShield = usePong((state: any) => state.playerShield);
+  const aiShield = usePong((state: any) => state.aiShield);
+  const multiballs = usePong((state: any) => state.multiballs);
+  const predictionLine = usePong((state: any) => state.predictionLine);
   const groupRef = useRef<THREE.Group>(null);
   const { selectedMap, gameMaps } = useSkins();
   const currentMap = gameMaps[selectedMap];

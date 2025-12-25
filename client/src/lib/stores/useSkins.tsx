@@ -274,7 +274,7 @@ const DEFAULT_MAPS: Record<MapStyle, GameMap> = {
 export const useSkins = create<SkinsState>()(
   subscribeWithSelector(
     persist(
-      (set, get) => ({
+      (set: any, get: any) => ({
         playerSkin: "default",
         aiSkin: "default",
         selectedMap: "neon",
