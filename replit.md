@@ -54,6 +54,13 @@ server/
   - Ocean Blue - Crystal clear water court
   - Forest Green - Lush verdant arena
 - **Visual Quality**: Anti-aliasing enabled, DPR 2, smooth ball geometry
+- **Visual Effects**:
+  - Ball trail with fading particles following the ball
+  - Pulsing glow effect on paddles with dynamic lighting
+  - Screen flash on scoring (cyan for player, red for AI)
+  - Victory confetti celebration when player wins
+- **Coin System**: Collect coins during gameplay to unlock skins and maps
+- **Power-ups**: Various power-ups spawn during rallies (assigned to last ball hitter)
 
 ## Running the Game
 - Start with `npm run dev`
@@ -63,6 +70,14 @@ server/
 - Mobile: Use on-screen touch buttons to move paddle
 
 ## Recent Changes
+- December 25, 2025: Added visual polish and effects
+  - Ball trail effect with fading particle spheres
+  - Paddle glow/pulse animations using refs for performance
+  - Point lights on paddles that pulse with emissive intensity
+  - Screen flash overlay on scoring events
+  - Victory confetti celebration using react-confetti
+  - Power-ups and coins now assigned to whoever hit the ball last
+
 - December 24, 2025: Added customizable stages/maps
   - Created GameMap interface with color configurations
   - Added 5 themed maps (Neon, Midnight, Sunset, Ocean, Forest)
