@@ -3,6 +3,7 @@ import { useSkins } from "@/lib/stores/useSkins";
 import { useAudio } from "@/lib/stores/useAudio";
 import { useProgression } from "@/lib/stores/useProgression";
 import { useAchievements } from "@/lib/stores/useAchievements";
+import { useGameSpeed } from "@/lib/stores/useGameSpeed";
 import { AchievementsMenu } from "./AchievementsMenu";
 
 export function MainMenu() {
@@ -313,6 +314,9 @@ export function MainMenu() {
   }
   
   if (menuState === "settings") {
+    const gameSpeed = useGameSpeed(state => state.gameSpeed);
+    const setGameSpeed = useGameSpeed(state => state.setGameSpeed);
+    
     return (
       <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-b from-gray-900 to-black pointer-events-auto px-4">
         <button 
@@ -325,18 +329,39 @@ export function MainMenu() {
         <div className="text-center">
           <h1 className="text-3xl md:text-5xl font-bold text-white mb-8">SETTINGS</h1>
           
-          <div className="bg-gray-800 p-6 md:p-8 rounded-lg max-w-md mb-8">
-            <div className="flex items-center justify-between mb-6">
-              <span className="text-white text-lg">Sound</span>
-              <button 
-                onClick={toggleMute}
-                className="px-6 py-2 bg-gray-600 hover:bg-gray-500 active:bg-gray-400 text-white font-bold rounded transition-colors"
-              >
-                {isMuted ? "OFF" : "ON"}
-              </button>
+          <div className="bg-gray-800 p-6 md:p-8 rounded-lg max-w-lg mb-8 space-y-6">
+            <div>
+              <div className="flex items-center justify-between mb-6">
+                <span className="text-white text-lg">Sound</span>
+                <button 
+                  onClick={toggleMute}
+                  className="px-6 py-2 bg-gray-600 hover:bg-gray-500 active:bg-gray-400 text-white font-bold rounded transition-colors"
+                >
+                  {isMuted ? "OFF" : "ON"}
+                </button>
+              </div>
             </div>
             
-            <div className="text-gray-400 text-sm mb-4 text-left">
+            <div>
+              <div className="text-white text-lg mb-3 font-semibold">Game Speed</div>
+              <div className="grid grid-cols-4 gap-2">
+                {(["slow", "medium", "fast", "superfast"] as const).map((speed) => (
+                  <button
+                    key={speed}
+                    onClick={() => setGameSpeed(speed)}
+                    className={`px-3 py-2 rounded text-sm font-bold transition-colors ${
+                      gameSpeed === speed
+                        ? "bg-cyan-600 text-white"
+                        : "bg-gray-700 text-gray-300 hover:bg-gray-600"
+                    }`}
+                  >
+                    {speed.charAt(0).toUpperCase() + speed.slice(1)}
+                  </button>
+                ))}
+              </div>
+            </div>
+            
+            <div className="text-gray-400 text-sm text-left">
               <p className="font-semibold text-white mb-2">Game Info:</p>
               <p>• Win 5 points to win a round</p>
               <p>• Win multiple rounds to face tougher AI</p>

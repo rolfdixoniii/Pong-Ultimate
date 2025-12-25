@@ -7,6 +7,7 @@ import { usePong } from "@/lib/stores/usePong";
 import { useAudio } from "@/lib/stores/useAudio";
 import { useTouchControls } from "@/lib/stores/useTouchControls";
 import { useSkins } from "@/lib/stores/useSkins";
+import { useGameSpeed } from "@/lib/stores/useGameSpeed";
 
 const PADDLE_WIDTH = 0.5;
 const PADDLE_HEIGHT = 1;
@@ -31,9 +32,10 @@ function PlayerPaddle({ paddleRef, onVelocityUpdate }: {
   const hitFlash = usePong(state => state.hitFlash);
   const { playerSkin, paddleSkins } = useSkins();
   const skinData = paddleSkins[playerSkin];
+  const gameSpeedMultiplier = useGameSpeed(state => state.speedMultiplier);
   
   const baseSpeed = 0.35;
-  const speed = hasSpeedBoost ? baseSpeed * 1.8 : baseSpeed;
+  const speed = (hasSpeedBoost ? baseSpeed * 1.8 : baseSpeed) * gameSpeedMultiplier;
   const paddleScale = hasBigPaddle ? 1.5 : 1;
   const maxZ = COURT_DEPTH / 2 - (PADDLE_DEPTH * paddleScale) / 2 - 0.5;
   const lastZRef = useRef(0);
@@ -107,8 +109,9 @@ function AIPaddle({ paddleRef, onVelocityUpdate }: {
   const hitFlash = usePong(state => state.hitFlash);
   const { aiSkin, paddleSkins } = useSkins();
   const skinData = paddleSkins[aiSkin];
+  const gameSpeedMultiplier = useGameSpeed(state => state.speedMultiplier);
   
-  const speedMultiplier = hasSpeedBoost ? 1.5 : 1;
+  const speedMultiplier = (hasSpeedBoost ? 1.5 : 1) * gameSpeedMultiplier;
   const paddleScale = hasBigPaddle ? 1.5 : 1;
   const maxZ = COURT_DEPTH / 2 - (PADDLE_DEPTH * paddleScale) / 2 - 0.5;
   const reactionTimerRef = useRef(0);
@@ -436,6 +439,8 @@ function Ball({ playerPaddleRef, aiPaddleRef, playerPaddleVelocity, aiPaddleVelo
     scoredRef.current = false;
   }, [initializeBall]);
   
+  const gameSpeedMultiplier = useGameSpeed(state => state.speedMultiplier);
+  
   useFrame(() => {
     if (!meshRef.current || phase !== "playing" || scoredRef.current) return;
     
@@ -444,7 +449,7 @@ function Ball({ playerPaddleRef, aiPaddleRef, playerPaddleVelocity, aiPaddleVelo
     const ball = meshRef.current;
     const velocity = velocityRef.current;
     
-    const speedMultiplier = hasSlowBall ? 0.85 : 1;
+    const speedMultiplier = (hasSlowBall ? 0.85 : 1) * gameSpeedMultiplier;
     
     velocity.z += curveRef.current;
     curveRef.current *= CURVE_DECAY;
