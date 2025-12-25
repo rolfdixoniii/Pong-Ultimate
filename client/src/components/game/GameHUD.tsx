@@ -333,7 +333,7 @@ export function GameHUD() {
         <div className="absolute inset-0 flex items-center justify-center bg-black/80 pointer-events-auto px-4">
           <div className="text-center">
             <div className="text-yellow-400 text-sm md:text-lg mb-1 md:mb-2">Round {round} - {getDifficultyLabel(round)}</div>
-            <h2 className="text-3xl md:text-5xl font-bold mb-2 md:mb-4" style={{ color: winner === "player" ? "#4fc3f7" : "#ef5350" }}>
+            <h2 className="text-3xl md:text-5xl font-bold mb-2 md:mb-4" style={{ color: winner === "player" ? usernameColor : "#ef5350" }}>
               {winner === "player" ? "YOU WIN!" : "AI WINS!"}
             </h2>
             <div className="text-xl md:text-2xl text-white mb-2">

@@ -238,9 +238,10 @@ export function MainMenu() {
                     <button
                       onClick={() => selectPlayerSkin(skin.id)}
                       className={`px-4 py-2 rounded text-sm font-bold transition-colors ${isPlayerSelected
-                        ? 'bg-cyan-600 text-white'
-                        : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+                        ? 'text-white' // Selected state: custom background (applied via style), white text
+                        : 'bg-gray-700 text-gray-300 hover:bg-gray-600' // Unselected: dark gray
                         }`}
+                      style={isPlayerSelected ? { backgroundColor: usernameColor } : {}}
                     >
                       {isPlayerSelected ? `✓ ${username || "Player"}` : username || "Player"}
                     </button>
