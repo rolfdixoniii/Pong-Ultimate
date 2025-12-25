@@ -3,10 +3,14 @@ import { subscribeWithSelector } from "zustand/middleware";
 
 export type SkinType = "player" | "ai";
 export type PaddleSkinStyle = "default" | "neon" | "chrome" | "fire" | "ice";
+export type AwakenedSkinStyle = "awakened_default" | "awakened_neon" | "awakened_chrome" | "awakened_fire" | "awakened_ice";
+export type AllSkinStyles = PaddleSkinStyle | AwakenedSkinStyle;
 export type MapStyle = "neon" | "midnight" | "sunset" | "ocean" | "forest";
 
+export type SkinPowerType = "second_chance" | "electric_trail" | "power_shot" | "inferno_curve" | "frozen_vision";
+
 export interface PaddleSkin {
-  id: PaddleSkinStyle;
+  id: AllSkinStyles;
   name: string;
   description: string;
   unlocked: boolean;
@@ -14,6 +18,11 @@ export interface PaddleSkin {
   emissiveColor: string;
   coinCost: number;
   levelRequired: number;
+  isAwakened?: boolean;
+  baseSkin?: PaddleSkinStyle;
+  powerType?: SkinPowerType;
+  powerHitsRequired?: number;
+  powerDuration?: number;
 }
 
 export interface GameMap {
@@ -35,24 +44,26 @@ export interface GameMap {
 }
 
 interface SkinsState {
-  playerSkin: PaddleSkinStyle;
-  aiSkin: PaddleSkinStyle;
+  playerSkin: AllSkinStyles;
+  aiSkin: AllSkinStyles;
   selectedMap: MapStyle;
-  unlockedSkins: PaddleSkinStyle[];
+  unlockedSkins: AllSkinStyles[];
   unlockedMaps: MapStyle[];
-  paddleSkins: Record<PaddleSkinStyle, PaddleSkin>;
+  paddleSkins: Record<AllSkinStyles, PaddleSkin>;
   gameMaps: Record<MapStyle, GameMap>;
   
-  selectPlayerSkin: (skin: PaddleSkinStyle) => void;
-  selectAISkin: (skin: PaddleSkinStyle) => void;
-  unlockSkin: (skin: PaddleSkinStyle, playerLevel: number, playerCoins: number) => { success: boolean; reason: string; cost?: number };
+  selectPlayerSkin: (skin: AllSkinStyles) => void;
+  selectAISkin: (skin: AllSkinStyles) => void;
+  unlockSkin: (skin: AllSkinStyles, playerLevel: number, playerCoins: number) => { success: boolean; reason: string; cost?: number };
   selectMap: (map: MapStyle) => void;
   unlockMap: (map: MapStyle, playerLevel: number, playerCoins: number) => { success: boolean; reason: string; cost?: number };
-  canUnlockSkin: (skin: PaddleSkinStyle, playerLevel: number, playerCoins: number) => { canUnlock: boolean; reason: string };
+  canUnlockSkin: (skin: AllSkinStyles, playerLevel: number, playerCoins: number) => { canUnlock: boolean; reason: string };
   canUnlockMap: (map: MapStyle, playerLevel: number, playerCoins: number) => { canUnlock: boolean; reason: string };
+  getPlayerPower: () => { powerType: SkinPowerType; hitsRequired: number; duration: number } | null;
+  getAIPower: () => { powerType: SkinPowerType; hitsRequired: number; duration: number } | null;
 }
 
-const DEFAULT_SKINS: Record<PaddleSkinStyle, PaddleSkin> = {
+const DEFAULT_SKINS: Record<AllSkinStyles, PaddleSkin> = {
   default: {
     id: "default",
     name: "Default",
@@ -102,6 +113,81 @@ const DEFAULT_SKINS: Record<PaddleSkinStyle, PaddleSkin> = {
     emissiveColor: "#06b6d4",
     coinCost: 200,
     levelRequired: 8,
+  },
+  awakened_default: {
+    id: "awakened_default",
+    name: "Awakened Default",
+    description: "Second Chance: Auto-shield every 8 hits",
+    unlocked: false,
+    color: "#22d3ee",
+    emissiveColor: "#67e8f9",
+    coinCost: 100,
+    levelRequired: 3,
+    isAwakened: true,
+    baseSkin: "default",
+    powerType: "second_chance",
+    powerHitsRequired: 8,
+    powerDuration: 0,
+  },
+  awakened_neon: {
+    id: "awakened_neon",
+    name: "Awakened Neon",
+    description: "Electric Trail: Afterimage deflects ball every 7 hits",
+    unlocked: false,
+    color: "#c084fc",
+    emissiveColor: "#e879f9",
+    coinCost: 150,
+    levelRequired: 5,
+    isAwakened: true,
+    baseSkin: "neon",
+    powerType: "electric_trail",
+    powerHitsRequired: 7,
+    powerDuration: 3000,
+  },
+  awakened_chrome: {
+    id: "awakened_chrome",
+    name: "Awakened Chrome",
+    description: "Power Shot: 2x ball speed every 6 hits",
+    unlocked: false,
+    color: "#f9fafb",
+    emissiveColor: "#ffffff",
+    coinCost: 200,
+    levelRequired: 7,
+    isAwakened: true,
+    baseSkin: "chrome",
+    powerType: "power_shot",
+    powerHitsRequired: 6,
+    powerDuration: 0,
+  },
+  awakened_fire: {
+    id: "awakened_fire",
+    name: "Awakened Fire",
+    description: "Inferno Curve: Extreme ball curve every 5 hits",
+    unlocked: false,
+    color: "#fb923c",
+    emissiveColor: "#fdba74",
+    coinCost: 300,
+    levelRequired: 9,
+    isAwakened: true,
+    baseSkin: "fire",
+    powerType: "inferno_curve",
+    powerHitsRequired: 5,
+    powerDuration: 3000,
+  },
+  awakened_ice: {
+    id: "awakened_ice",
+    name: "Awakened Ice",
+    description: "Frozen Vision: See ball trajectory every 5 hits",
+    unlocked: false,
+    color: "#38bdf8",
+    emissiveColor: "#7dd3fc",
+    coinCost: 400,
+    levelRequired: 12,
+    isAwakened: true,
+    baseSkin: "ice",
+    powerType: "frozen_vision",
+    powerHitsRequired: 5,
+    powerDuration: 5000,
   },
 };
 
@@ -197,21 +283,21 @@ export const useSkins = create<SkinsState>()(
     paddleSkins: DEFAULT_SKINS,
     gameMaps: DEFAULT_MAPS,
     
-    selectPlayerSkin: (skin: PaddleSkinStyle) => {
+    selectPlayerSkin: (skin: AllSkinStyles) => {
       const { unlockedSkins } = get();
       if (unlockedSkins.includes(skin)) {
         set({ playerSkin: skin });
       }
     },
     
-    selectAISkin: (skin: PaddleSkinStyle) => {
+    selectAISkin: (skin: AllSkinStyles) => {
       const { unlockedSkins } = get();
       if (unlockedSkins.includes(skin)) {
         set({ aiSkin: skin });
       }
     },
     
-    unlockSkin: (skin: PaddleSkinStyle, playerLevel: number, playerCoins: number) => {
+    unlockSkin: (skin: AllSkinStyles, playerLevel: number, playerCoins: number) => {
       const { unlockedSkins, paddleSkins } = get();
       if (unlockedSkins.includes(skin)) {
         return { success: false, reason: "Already unlocked" };
@@ -227,7 +313,7 @@ export const useSkins = create<SkinsState>()(
       return { success: true, reason: "", cost: skinData.coinCost };
     },
     
-    canUnlockSkin: (skin: PaddleSkinStyle, playerLevel: number, playerCoins: number) => {
+    canUnlockSkin: (skin: AllSkinStyles, playerLevel: number, playerCoins: number) => {
       const { unlockedSkins, paddleSkins } = get();
       if (unlockedSkins.includes(skin)) {
         return { canUnlock: false, reason: "Already unlocked" };
@@ -278,6 +364,32 @@ export const useSkins = create<SkinsState>()(
         return { canUnlock: false, reason: `Need ${mapData.coinCost} coins` };
       }
       return { canUnlock: true, reason: "" };
+    },
+    
+    getPlayerPower: () => {
+      const { playerSkin, paddleSkins } = get();
+      const skin = paddleSkins[playerSkin];
+      if (skin.isAwakened && skin.powerType && skin.powerHitsRequired) {
+        return {
+          powerType: skin.powerType,
+          hitsRequired: skin.powerHitsRequired,
+          duration: skin.powerDuration || 0,
+        };
+      }
+      return null;
+    },
+    
+    getAIPower: () => {
+      const { aiSkin, paddleSkins } = get();
+      const skin = paddleSkins[aiSkin];
+      if (skin.isAwakened && skin.powerType && skin.powerHitsRequired) {
+        return {
+          powerType: skin.powerType,
+          hitsRequired: skin.powerHitsRequired,
+          duration: skin.powerDuration || 0,
+        };
+      }
+      return null;
     },
   }))
 );

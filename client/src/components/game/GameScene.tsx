@@ -401,6 +401,12 @@ function Ball({ playerPaddleRef, aiPaddleRef, playerPaddleVelocity, aiPaddleVelo
   const collectCoin = usePong(state => state.collectCoin);
   const consumeShield = usePong(state => state.consumeShield);
   const clearMultiballs = usePong(state => state.clearMultiballs);
+  const incrementPowerHits = usePong(state => state.incrementPowerHits);
+  const triggerSkinPower = usePong(state => state.triggerSkinPower);
+  const activeSkinPower = usePong(state => state.activeSkinPower);
+  const setPredictionLine = usePong(state => state.setPredictionLine);
+  const updateSkinPowers = usePong(state => state.updateSkinPowers);
+  const { getPlayerPower, getAIPower } = useSkins();
   const { playHit } = useAudio();
   const scoredRef = useRef(false);
   const timeoutRef = useRef<number | null>(null);
@@ -445,6 +451,20 @@ function Ball({ playerPaddleRef, aiPaddleRef, playerPaddleVelocity, aiPaddleVelo
     if (!meshRef.current || phase !== "playing" || scoredRef.current) return;
     
     updateEffects(Date.now());
+    updateSkinPowers(Date.now());
+    
+    if (activeSkinPower?.type === "frozen_vision" && activeSkinPower.target === "player") {
+      const ball = meshRef.current;
+      const vel = velocityRef.current;
+      const endX = vel.x > 0 ? COURT_WIDTH / 2 : -COURT_WIDTH / 2;
+      const timeToEnd = Math.abs((endX - ball.position.x) / vel.x);
+      let predictedZ = ball.position.z + vel.z * timeToEnd;
+      predictedZ = Math.max(-COURT_DEPTH / 2, Math.min(COURT_DEPTH / 2, predictedZ));
+      setPredictionLine({
+        start: { x: ball.position.x, z: ball.position.z },
+        end: { x: endX, z: predictedZ }
+      });
+    }
     
     const ball = meshRef.current;
     const velocity = velocityRef.current;
@@ -515,6 +535,21 @@ function Ball({ playerPaddleRef, aiPaddleRef, playerPaddleVelocity, aiPaddleVelo
         triggerHitFlash("player");
         triggerScreenShake(0.15);
         
+        const playerPower = getPlayerPower();
+        if (playerPower) {
+          const newHits = incrementPowerHits("player");
+          if (newHits >= playerPower.hitsRequired) {
+            triggerSkinPower("player", playerPower.powerType, playerPower.duration);
+            
+            if (playerPower.powerType === "power_shot") {
+              velocity.multiplyScalar(2);
+            }
+            if (playerPower.powerType === "inferno_curve") {
+              curveRef.current = (Math.random() > 0.5 ? 1 : -1) * 0.15;
+            }
+          }
+        }
+        
         rallyCountRef.current++;
         if (rallyCountRef.current - lastSpawnRallyRef.current >= 3 && Math.random() < 0.4) {
           spawnPowerUp();
@@ -550,6 +585,21 @@ function Ball({ playerPaddleRef, aiPaddleRef, playerPaddleVelocity, aiPaddleVelo
         incrementCombo("ai");
         triggerHitFlash("ai");
         triggerScreenShake(0.1);
+        
+        const aiPower = getAIPower();
+        if (aiPower) {
+          const newHits = incrementPowerHits("ai");
+          if (newHits >= aiPower.hitsRequired) {
+            triggerSkinPower("ai", aiPower.powerType, aiPower.duration);
+            
+            if (aiPower.powerType === "power_shot") {
+              velocity.multiplyScalar(2);
+            }
+            if (aiPower.powerType === "inferno_curve") {
+              curveRef.current = (Math.random() > 0.5 ? 1 : -1) * 0.15;
+            }
+          }
+        }
         
         rallyCountRef.current++;
       }
@@ -658,6 +708,31 @@ function BallTrail() {
   );
 }
 
+function PredictionLine() {
+  const predictionLine = usePong(state => state.predictionLine);
+  
+  if (!predictionLine) return null;
+  
+  const startVec = new THREE.Vector3(predictionLine.start.x, 0.3, predictionLine.start.z);
+  const endVec = new THREE.Vector3(predictionLine.end.x, 0.3, predictionLine.end.z);
+  const midpoint = startVec.clone().add(endVec).multiplyScalar(0.5);
+  const length = startVec.distanceTo(endVec);
+  const angle = Math.atan2(endVec.z - startVec.z, endVec.x - startVec.x);
+  
+  return (
+    <mesh position={[midpoint.x, midpoint.y, midpoint.z]} rotation={[0, -angle, 0]}>
+      <boxGeometry args={[length, 0.08, 0.08]} />
+      <meshStandardMaterial 
+        color="#00ffff" 
+        emissive="#00ffff" 
+        emissiveIntensity={1}
+        transparent
+        opacity={0.8}
+      />
+    </mesh>
+  );
+}
+
 function SmoothCamera() {
   const cameraTarget = useRef(new THREE.Vector3(0, 0, 0));
   
@@ -690,6 +765,7 @@ export function GameScene() {
   const playerShield = usePong(state => state.playerShield);
   const aiShield = usePong(state => state.aiShield);
   const multiballs = usePong(state => state.multiballs);
+  const predictionLine = usePong(state => state.predictionLine);
   const groupRef = useRef<THREE.Group>(null);
   const { selectedMap, gameMaps } = useSkins();
   const currentMap = gameMaps[selectedMap];
@@ -736,6 +812,8 @@ export function GameScene() {
       
       {playerShield && <Shield side="player" />}
       {aiShield && <Shield side="ai" />}
+      
+      {predictionLine && <PredictionLine />}
       
       {multiballs.map(mb => (
         <Multiball 

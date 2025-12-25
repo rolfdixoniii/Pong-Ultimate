@@ -2,6 +2,7 @@ import { usePong } from "@/lib/stores/usePong";
 import { useAudio } from "@/lib/stores/useAudio";
 import { useProgression } from "@/lib/stores/useProgression";
 import { useAchievements } from "@/lib/stores/useAchievements";
+import { useSkins } from "@/lib/stores/useSkins";
 import { useEffect, useState, useRef } from "react";
 import Confetti from "react-confetti";
 
@@ -9,7 +10,8 @@ import { MainMenu } from "./MainMenu";
 import { AchievementToast } from "./AchievementToast";
 
 export function GameHUD() {
-  const { phase, playerScore, aiScore, winner, round, combo, maxCombo, activeEffects, startGame, startNextRound, resetGame, pauseGame, resumeGame, menuState, playerShield, aiShield, multiballs } = usePong();
+  const { phase, playerScore, aiScore, winner, round, combo, maxCombo, activeEffects, startGame, startNextRound, resetGame, pauseGame, resumeGame, menuState, playerShield, aiShield, multiballs, playerPowerHits, activeSkinPower } = usePong();
+  const { getPlayerPower } = useSkins();
   const { isMuted, toggleMute } = useAudio();
   const { level, pendingRewards, clearPendingRewards, recordRoundWin, recordRoundLoss, recordGameWin, recordGameLoss, getXpProgress, coins, stats } = useProgression();
   const { updateProgress, setProgress, incrementStreak, resetStreak, currentStreak } = useAchievements();
@@ -194,6 +196,28 @@ export function GameHUD() {
             </div>
           </div>
           <div className="absolute top-4 left-4 flex flex-col gap-1">
+            {(() => {
+              const playerPower = getPlayerPower();
+              if (playerPower) {
+                const progress = Math.min(playerPowerHits / playerPower.hitsRequired, 1);
+                const isActive = activeSkinPower?.target === "player";
+                return (
+                  <div className="px-2 py-1 bg-black/50 rounded mb-1">
+                    <div className="text-xs font-bold text-yellow-400 mb-0.5">
+                      {isActive ? `${playerPower.powerType.replace('_', ' ').toUpperCase()} ACTIVE!` : playerPower.powerType.replace('_', ' ').toUpperCase()}
+                    </div>
+                    <div className="w-24 h-2 bg-gray-700 rounded overflow-hidden">
+                      <div 
+                        className={`h-full transition-all ${isActive ? 'bg-yellow-400 animate-pulse' : 'bg-yellow-600'}`}
+                        style={{ width: `${progress * 100}%` }}
+                      />
+                    </div>
+                    <div className="text-xs text-gray-400">{playerPowerHits}/{playerPower.hitsRequired} hits</div>
+                  </div>
+                );
+              }
+              return null;
+            })()}
             {playerShield && (
               <div className="text-xs md:text-sm font-bold px-2 py-1 bg-black/50 rounded text-cyan-400 animate-pulse">
                 YOUR SHIELD

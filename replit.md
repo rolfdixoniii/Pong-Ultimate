@@ -47,6 +47,12 @@ server/
 - **Game States**: Menu, Playing, Paused, Game Over
 - **Responsive UI**: HUD adapts to mobile and desktop screen sizes
 - **Paddle Skins**: 5 unique paddle designs (Default, Neon, Chrome, Fire, Ice)
+- **Awakened Skins**: 5 upgraded paddle variants with special powers triggered by hit streaks
+  - Awakened Neon (Electric Trail) - Visual afterimage effect
+  - Awakened Chrome (Power Shot) - 2x ball speed on power hit
+  - Awakened Fire (Inferno Curve) - Extreme ball curving
+  - Awakened Ice (Frozen Vision) - See ball trajectory prediction
+  - Awakened Plasma (Second Chance) - Grants temporary shield
 - **Game Maps**: 5 themed court environments with unique color schemes
   - Neon Night (default) - Cyberpunk neon arena
   - Midnight - Dark and moody court
@@ -81,6 +87,14 @@ server/
 - Mobile: Use on-screen touch buttons to move paddle
 
 ## Recent Changes
+- December 25, 2025: Added awakened skins system
+  - 5 awakened paddle variants with unique special powers
+  - Powers triggered by consecutive paddle hits (3-5 hits required)
+  - Power types: Second Chance (shield), Electric Trail, Power Shot (2x speed), Inferno Curve, Frozen Vision (trajectory)
+  - Higher unlock costs and level requirements (Lvl 6-12)
+  - Yellow "AWAKENED" badges in skins menu
+  - HUD power charge indicator showing progress to next power
+
 - December 25, 2025: Visual and performance improvements
   - Added bloom and vignette post-processing effects
   - Smooth camera follow that tracks ball with damping

@@ -132,16 +132,24 @@ export function MainMenu() {
             const isUnlocked = unlockedSkins.includes(skin.id);
             const isPlayerSelected = playerSkin === skin.id;
             const isAISelected = aiSkin === skin.id;
+            const isAwakened = skin.isAwakened === true;
             
             return (
               <div 
                 key={skin.id}
-                className={`p-4 rounded-lg border-2 transition-all ${
+                className={`p-4 rounded-lg border-2 transition-all relative ${
                   isUnlocked 
-                    ? 'border-cyan-500 bg-gray-800 hover:bg-gray-700' 
+                    ? isAwakened 
+                      ? 'border-yellow-500 bg-gray-800 hover:bg-gray-700' 
+                      : 'border-cyan-500 bg-gray-800 hover:bg-gray-700' 
                     : 'border-gray-600 bg-gray-900 opacity-50'
                 }`}
               >
+                {isAwakened && (
+                  <div className="absolute top-2 right-2 px-2 py-0.5 bg-yellow-500 text-black text-xs font-bold rounded">
+                    AWAKENED
+                  </div>
+                )}
                 <h3 className="text-lg md:text-xl font-bold text-white">{skin.name}</h3>
                 <p className="text-gray-400 text-sm mb-3">{skin.description}</p>
                 

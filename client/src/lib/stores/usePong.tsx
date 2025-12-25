@@ -1,10 +1,17 @@
 import { create } from "zustand";
 import { subscribeWithSelector } from "zustand/middleware";
+import type { SkinPowerType } from "./useSkins";
 
 export type GamePhase = "menu" | "playing" | "paused" | "gameOver";
 export type MenuState = "main" | "skins" | "settings" | "maps" | "achievements";
 
 export type PowerUpType = "bigPaddle" | "slowBall" | "multiball" | "speedBoost" | "shield";
+
+export interface ActiveSkinPower {
+  target: "player" | "ai";
+  type: SkinPowerType;
+  expiresAt: number;
+}
 
 export interface PowerUp {
   id: string;
@@ -85,6 +92,12 @@ interface PongState {
   aiShield: boolean;
   multiballs: { id: string; velocity: { x: number; z: number } }[];
   
+  playerPowerHits: number;
+  aiPowerHits: number;
+  activeSkinPower: ActiveSkinPower | null;
+  predictionLine: { start: { x: number; z: number }; end: { x: number; z: number } } | null;
+  electricTrailPos: { x: number; z: number } | null;
+  
   setMenuState: (state: MenuState) => void;
   consumeShield: (target: "player" | "ai") => boolean;
   addMultiball: () => void;
@@ -115,6 +128,13 @@ interface PongState {
   triggerScreenShake: (intensity: number) => void;
   triggerHitFlash: (paddle: "player" | "ai") => void;
   clearVisualEffects: () => void;
+  
+  incrementPowerHits: (target: "player" | "ai") => number;
+  triggerSkinPower: (target: "player" | "ai", type: SkinPowerType, duration: number) => void;
+  clearSkinPowers: () => void;
+  updateSkinPowers: (currentTime: number) => void;
+  setPredictionLine: (line: { start: { x: number; z: number }; end: { x: number; z: number } } | null) => void;
+  setElectricTrailPos: (pos: { x: number; z: number } | null) => void;
 }
 
 const POWER_UP_TYPES: PowerUpType[] = ["bigPaddle", "slowBall", "speedBoost", "multiball", "shield"];
@@ -145,6 +165,12 @@ export const usePong = create<PongState>()(
     playerShield: false,
     aiShield: false,
     multiballs: [],
+    
+    playerPowerHits: 0,
+    aiPowerHits: 0,
+    activeSkinPower: null,
+    predictionLine: null,
+    electricTrailPos: null,
     
     setMenuState: (menuState: MenuState) => set({ menuState }),
     
@@ -209,6 +235,11 @@ export const usePong = create<PongState>()(
         playerShield: false,
         aiShield: false,
         multiballs: [],
+        playerPowerHits: 0,
+        aiPowerHits: 0,
+        activeSkinPower: null,
+        predictionLine: null,
+        electricTrailPos: null,
       });
     },
     
@@ -230,6 +261,10 @@ export const usePong = create<PongState>()(
         playerShield: false,
         aiShield: false,
         multiballs: [],
+        playerPowerHits: 0,
+        aiPowerHits: 0,
+        activeSkinPower: null,
+        predictionLine: null,
       });
     },
     
@@ -264,6 +299,11 @@ export const usePong = create<PongState>()(
         playerShield: false,
         aiShield: false,
         multiballs: [],
+        playerPowerHits: 0,
+        aiPowerHits: 0,
+        activeSkinPower: null,
+        predictionLine: null,
+        electricTrailPos: null,
       });
     },
     
@@ -413,6 +453,82 @@ export const usePong = create<PongState>()(
     addCoins: (amount) => {
       const { coinsCollected } = get();
       set({ coinsCollected: coinsCollected + amount });
+    },
+    
+    incrementPowerHits: (target) => {
+      const newCount = target === "player" 
+        ? get().playerPowerHits + 1 
+        : get().aiPowerHits + 1;
+      if (target === "player") {
+        set({ playerPowerHits: newCount });
+      } else {
+        set({ aiPowerHits: newCount });
+      }
+      return newCount;
+    },
+    
+    triggerSkinPower: (target, type, duration) => {
+      const expiresAt = duration > 0 ? Date.now() + duration : 0;
+      
+      if (type === "second_chance") {
+        if (target === "player") {
+          set({ playerShield: true, playerPowerHits: 0 });
+        } else {
+          set({ aiShield: true, aiPowerHits: 0 });
+        }
+        return;
+      }
+      
+      if (type === "power_shot" || type === "inferno_curve") {
+        set({ 
+          activeSkinPower: { target, type, expiresAt: duration > 0 ? Date.now() + duration : Date.now() + 500 },
+          [target === "player" ? "playerPowerHits" : "aiPowerHits"]: 0
+        });
+        return;
+      }
+      
+      if (type === "frozen_vision" || type === "electric_trail") {
+        set({ 
+          activeSkinPower: { target, type, expiresAt },
+          [target === "player" ? "playerPowerHits" : "aiPowerHits"]: 0
+        });
+        return;
+      }
+      
+      if (target === "player") {
+        set({ playerPowerHits: 0 });
+      } else {
+        set({ aiPowerHits: 0 });
+      }
+    },
+    
+    clearSkinPowers: () => {
+      set({
+        playerPowerHits: 0,
+        aiPowerHits: 0,
+        activeSkinPower: null,
+        predictionLine: null,
+        electricTrailPos: null,
+      });
+    },
+    
+    updateSkinPowers: (currentTime) => {
+      const { activeSkinPower } = get();
+      if (activeSkinPower && activeSkinPower.expiresAt > 0 && currentTime >= activeSkinPower.expiresAt) {
+        set({ 
+          activeSkinPower: null,
+          predictionLine: null,
+          electricTrailPos: null,
+        });
+      }
+    },
+    
+    setPredictionLine: (line) => {
+      set({ predictionLine: line });
+    },
+    
+    setElectricTrailPos: (pos) => {
+      set({ electricTrailPos: pos });
     },
   }))
 );
