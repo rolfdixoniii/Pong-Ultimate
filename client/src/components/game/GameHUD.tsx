@@ -91,6 +91,14 @@ export function GameHUD() {
     }
   };
   
+  if (phase === "menu") {
+    return (
+      <div className="relative min-h-screen w-full pointer-events-auto overflow-auto" style={{ backgroundColor: '#0a0a0f' }}>
+        <MainMenu />
+      </div>
+    );
+  }
+  
   return (
     <div className="absolute inset-0 pointer-events-none">
       {showFlash && (
@@ -211,8 +219,6 @@ export function GameHUD() {
           </div>
         </div>
       )}
-      
-      {phase === "menu" && <MainMenu />}
       
       {phase === "gameOver" && (
         <div className="absolute inset-0 flex items-center justify-center bg-black/80 pointer-events-auto px-4">
