@@ -230,6 +230,8 @@ function PowerUpOrb({ powerUp }: { powerUp: { id: string; type: string; position
       case "bigPaddle": return "#00ff88";
       case "slowBall": return "#ff8800";
       case "speedBoost": return "#ff00ff";
+      case "multiball": return "#00ffff";
+      case "shield": return "#ffff00";
       default: return "#ffffff";
     }
   }, [powerUp.type]);
@@ -250,6 +252,119 @@ function PowerUpOrb({ powerUp }: { powerUp: { id: string; type: string; position
         emissiveIntensity={0.8}
         transparent
         opacity={0.9}
+      />
+    </mesh>
+  );
+}
+
+function Shield({ side }: { side: "player" | "ai" }) {
+  const meshRef = useRef<THREE.Mesh>(null);
+  const x = side === "player" ? -COURT_WIDTH / 2 - 0.3 : COURT_WIDTH / 2 + 0.3;
+  
+  useFrame(({ clock }) => {
+    if (!meshRef.current) return;
+    const material = meshRef.current.material as THREE.MeshStandardMaterial;
+    material.opacity = 0.5 + Math.sin(clock.elapsedTime * 4) * 0.2;
+  });
+  
+  return (
+    <mesh ref={meshRef} position={[x, 0.5, 0]}>
+      <boxGeometry args={[0.3, 2, COURT_DEPTH]} />
+      <meshStandardMaterial 
+        color={side === "player" ? "#00ffff" : "#ff4444"}
+        emissive={side === "player" ? "#00ffff" : "#ff4444"}
+        emissiveIntensity={0.8}
+        transparent
+        opacity={0.6}
+      />
+    </mesh>
+  );
+}
+
+function Multiball({ id, velocity, playerPaddleRef, aiPaddleRef }: { 
+  id: string; 
+  velocity: { x: number; z: number };
+  playerPaddleRef: React.RefObject<THREE.Mesh>;
+  aiPaddleRef: React.RefObject<THREE.Mesh>;
+}) {
+  const meshRef = useRef<THREE.Mesh>(null);
+  const velocityRef = useRef(new THREE.Vector3(velocity.x, 0, velocity.z));
+  const removeMultiball = usePong(state => state.removeMultiball);
+  const playerScored = usePong(state => state.playerScored);
+  const aiScored = usePong(state => state.aiScored);
+  const consumeShield = usePong(state => state.consumeShield);
+  const triggerScreenShake = usePong(state => state.triggerScreenShake);
+  const { playHit } = useAudio();
+  
+  useEffect(() => {
+    if (meshRef.current) {
+      meshRef.current.position.set(0, BALL_RADIUS, (Math.random() - 0.5) * 4);
+    }
+  }, []);
+  
+  useFrame(() => {
+    if (!meshRef.current) return;
+    
+    const ball = meshRef.current;
+    ball.position.add(velocityRef.current);
+    
+    const maxZ = COURT_DEPTH / 2 - BALL_RADIUS;
+    if (ball.position.z > maxZ || ball.position.z < -maxZ) {
+      velocityRef.current.z *= -1;
+      ball.position.z = THREE.MathUtils.clamp(ball.position.z, -maxZ, maxZ);
+      playHit();
+    }
+    
+    if (playerPaddleRef.current) {
+      const paddle = playerPaddleRef.current;
+      const paddleX = -COURT_WIDTH / 2 + 1;
+      if (
+        ball.position.x - BALL_RADIUS < paddleX + PADDLE_WIDTH / 2 &&
+        ball.position.x + BALL_RADIUS > paddleX - PADDLE_WIDTH / 2 &&
+        ball.position.z > paddle.position.z - PADDLE_DEPTH / 2 - BALL_RADIUS &&
+        ball.position.z < paddle.position.z + PADDLE_DEPTH / 2 + BALL_RADIUS
+      ) {
+        velocityRef.current.x = Math.abs(velocityRef.current.x);
+        playHit();
+      }
+    }
+    
+    if (aiPaddleRef.current) {
+      const paddle = aiPaddleRef.current;
+      const paddleX = COURT_WIDTH / 2 - 1;
+      if (
+        ball.position.x + BALL_RADIUS > paddleX - PADDLE_WIDTH / 2 &&
+        ball.position.x - BALL_RADIUS < paddleX + PADDLE_WIDTH / 2 &&
+        ball.position.z > paddle.position.z - PADDLE_DEPTH / 2 - BALL_RADIUS &&
+        ball.position.z < paddle.position.z + PADDLE_DEPTH / 2 + BALL_RADIUS
+      ) {
+        velocityRef.current.x = -Math.abs(velocityRef.current.x);
+        playHit();
+      }
+    }
+    
+    if (ball.position.x < -COURT_WIDTH / 2 - 1) {
+      if (!consumeShield("player")) {
+        aiScored();
+        triggerScreenShake(0.3);
+      }
+      removeMultiball(id);
+    } else if (ball.position.x > COURT_WIDTH / 2 + 1) {
+      if (!consumeShield("ai")) {
+        playerScored();
+        triggerScreenShake(0.3);
+      }
+      removeMultiball(id);
+    }
+  });
+  
+  return (
+    <mesh ref={meshRef} position={[0, BALL_RADIUS, 0]} castShadow>
+      <sphereGeometry args={[BALL_RADIUS * 0.8, 16, 16]} />
+      <meshStandardMaterial 
+        color="#00ffff" 
+        emissive="#00ffff" 
+        emissiveIntensity={0.6} 
       />
     </mesh>
   );
@@ -280,6 +395,8 @@ function Ball({ playerPaddleRef, aiPaddleRef, playerPaddleVelocity, aiPaddleVelo
   const spawnCoin = usePong(state => state.spawnCoin);
   const coins = usePong(state => state.coins);
   const collectCoin = usePong(state => state.collectCoin);
+  const consumeShield = usePong(state => state.consumeShield);
+  const clearMultiballs = usePong(state => state.clearMultiballs);
   const { playHit } = useAudio();
   const scoredRef = useRef(false);
   const timeoutRef = useRef<number | null>(null);
@@ -442,17 +559,33 @@ function Ball({ playerPaddleRef, aiPaddleRef, playerPaddleVelocity, aiPaddleVelo
     });
     
     if (ball.position.x < -COURT_WIDTH / 2 - 1 && !scoredRef.current) {
-      scoredRef.current = true;
-      aiScored();
-      triggerScreenShake(0.4);
-      resetCombo();
-      timeoutRef.current = window.setTimeout(() => resetBall(-1), 500);
+      if (consumeShield("player")) {
+        ball.position.x = -COURT_WIDTH / 2;
+        velocityRef.current.x = Math.abs(velocityRef.current.x);
+        triggerScreenShake(0.3);
+        playHit();
+      } else {
+        scoredRef.current = true;
+        aiScored();
+        triggerScreenShake(0.4);
+        resetCombo();
+        clearMultiballs();
+        timeoutRef.current = window.setTimeout(() => resetBall(-1), 500);
+      }
     } else if (ball.position.x > COURT_WIDTH / 2 + 1 && !scoredRef.current) {
-      scoredRef.current = true;
-      playerScored();
-      triggerScreenShake(0.4);
-      resetCombo();
-      timeoutRef.current = window.setTimeout(() => resetBall(1), 500);
+      if (consumeShield("ai")) {
+        ball.position.x = COURT_WIDTH / 2;
+        velocityRef.current.x = -Math.abs(velocityRef.current.x);
+        triggerScreenShake(0.3);
+        playHit();
+      } else {
+        scoredRef.current = true;
+        playerScored();
+        triggerScreenShake(0.4);
+        resetCombo();
+        clearMultiballs();
+        timeoutRef.current = window.setTimeout(() => resetBall(1), 500);
+      }
     }
   });
   
@@ -540,6 +673,9 @@ export function GameScene() {
   const powerUps = usePong(state => state.powerUps);
   const coins = usePong(state => state.coins);
   const screenShake = usePong(state => state.screenShake);
+  const playerShield = usePong(state => state.playerShield);
+  const aiShield = usePong(state => state.aiShield);
+  const multiballs = usePong(state => state.multiballs);
   const groupRef = useRef<THREE.Group>(null);
   const { selectedMap, gameMaps } = useSkins();
   const currentMap = gameMaps[selectedMap];
@@ -581,6 +717,19 @@ export function GameScene() {
       
       {coins.map(coin => (
         <CoinOrb key={coin.id} coin={coin} />
+      ))}
+      
+      {playerShield && <Shield side="player" />}
+      {aiShield && <Shield side="ai" />}
+      
+      {multiballs.map(mb => (
+        <Multiball 
+          key={mb.id} 
+          id={mb.id} 
+          velocity={mb.velocity}
+          playerPaddleRef={playerPaddleRef}
+          aiPaddleRef={aiPaddleRef}
+        />
       ))}
       
       {phase === "playing" && (

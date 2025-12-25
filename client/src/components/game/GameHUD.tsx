@@ -55,6 +55,8 @@ export function GameHUD() {
       case "bigPaddle": return "BIG PADDLE";
       case "slowBall": return "SLOW BALL";
       case "speedBoost": return "SPEED BOOST";
+      case "multiball": return "MULTIBALL";
+      case "shield": return "SHIELD";
       default: return type.toUpperCase();
     }
   };
@@ -64,6 +66,8 @@ export function GameHUD() {
       case "bigPaddle": return "text-green-400";
       case "slowBall": return "text-orange-400";
       case "speedBoost": return "text-pink-400";
+      case "multiball": return "text-cyan-400";
+      case "shield": return "text-yellow-400";
       default: return "text-white";
     }
   };

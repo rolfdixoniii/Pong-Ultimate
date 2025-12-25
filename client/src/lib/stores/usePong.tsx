@@ -4,7 +4,7 @@ import { subscribeWithSelector } from "zustand/middleware";
 export type GamePhase = "menu" | "playing" | "paused" | "gameOver";
 export type MenuState = "main" | "skins" | "settings" | "maps";
 
-export type PowerUpType = "bigPaddle" | "slowBall" | "multiball" | "speedBoost";
+export type PowerUpType = "bigPaddle" | "slowBall" | "multiball" | "speedBoost" | "shield";
 
 export interface PowerUp {
   id: string;
@@ -81,7 +81,15 @@ interface PongState {
   screenShake: number;
   hitFlash: { paddle: "player" | "ai"; time: number } | null;
   
+  playerShield: boolean;
+  aiShield: boolean;
+  multiballs: { id: string; velocity: { x: number; z: number } }[];
+  
   setMenuState: (state: MenuState) => void;
+  consumeShield: (target: "player" | "ai") => boolean;
+  addMultiball: () => void;
+  removeMultiball: (id: string) => void;
+  clearMultiballs: () => void;
   startGame: () => void;
   startNextRound: () => void;
   pauseGame: () => void;
@@ -109,7 +117,7 @@ interface PongState {
   clearVisualEffects: () => void;
 }
 
-const POWER_UP_TYPES: PowerUpType[] = ["bigPaddle", "slowBall", "speedBoost"];
+const POWER_UP_TYPES: PowerUpType[] = ["bigPaddle", "slowBall", "speedBoost", "multiball", "shield"];
 
 export const usePong = create<PongState>()(
   subscribeWithSelector((set, get) => ({
@@ -134,7 +142,47 @@ export const usePong = create<PongState>()(
     screenShake: 0,
     hitFlash: null,
     
+    playerShield: false,
+    aiShield: false,
+    multiballs: [],
+    
     setMenuState: (menuState: MenuState) => set({ menuState }),
+    
+    consumeShield: (target) => {
+      const shield = target === "player" ? get().playerShield : get().aiShield;
+      if (shield) {
+        if (target === "player") {
+          set({ playerShield: false });
+        } else {
+          set({ aiShield: false });
+        }
+        return true;
+      }
+      return false;
+    },
+    
+    addMultiball: () => {
+      const { multiballs } = get();
+      if (multiballs.length >= 2) return;
+      const id = `multiball-${Date.now()}`;
+      const angle = (Math.random() - 0.5) * Math.PI * 0.5;
+      const speed = 0.25;
+      set({
+        multiballs: [...multiballs, { 
+          id, 
+          velocity: { x: Math.cos(angle) * speed, z: Math.sin(angle) * speed }
+        }]
+      });
+    },
+    
+    removeMultiball: (id) => {
+      const { multiballs } = get();
+      set({ multiballs: multiballs.filter(m => m.id !== id) });
+    },
+    
+    clearMultiballs: () => {
+      set({ multiballs: [] });
+    },
     
     startGame: () => {
       const difficulty = getDifficultyForRound(1);
@@ -152,6 +200,9 @@ export const usePong = create<PongState>()(
         activeEffects: [],
         coins: [],
         coinsCollected: 0,
+        playerShield: false,
+        aiShield: false,
+        multiballs: [],
       });
     },
     
@@ -170,6 +221,9 @@ export const usePong = create<PongState>()(
         lastHitBy: null,
         powerUps: [],
         activeEffects: [],
+        playerShield: false,
+        aiShield: false,
+        multiballs: [],
       });
     },
     
@@ -201,6 +255,9 @@ export const usePong = create<PongState>()(
         lastHitBy: null,
         powerUps: [],
         activeEffects: [],
+        playerShield: false,
+        aiShield: false,
+        multiballs: [],
       });
     },
     
@@ -257,9 +314,25 @@ export const usePong = create<PongState>()(
     },
     
     collectPowerUp: (id, collector) => {
-      const { powerUps, activeEffects } = get();
+      const { powerUps, activeEffects, addMultiball } = get();
       const powerUp = powerUps.find(p => p.id === id);
       if (!powerUp) return;
+      
+      set({ powerUps: powerUps.filter(p => p.id !== id) });
+      
+      if (powerUp.type === "shield") {
+        if (collector === "player") {
+          set({ playerShield: true });
+        } else {
+          set({ aiShield: true });
+        }
+        return;
+      }
+      
+      if (powerUp.type === "multiball") {
+        addMultiball();
+        return;
+      }
       
       const duration = powerUp.type === "speedBoost" ? 3000 : 5000;
       const newEffect: ActiveEffect = {
@@ -269,7 +342,6 @@ export const usePong = create<PongState>()(
       };
       
       set({
-        powerUps: powerUps.filter(p => p.id !== id),
         activeEffects: [...activeEffects, newEffect]
       });
     },
