@@ -259,23 +259,24 @@ function PowerUpOrb({ powerUp }: { powerUp: { id: string; type: string; position
 
 function Shield({ side }: { side: "player" | "ai" }) {
   const meshRef = useRef<THREE.Mesh>(null);
-  const x = side === "player" ? -COURT_WIDTH / 2 - 0.3 : COURT_WIDTH / 2 + 0.3;
+  const x = side === "player" ? -COURT_WIDTH / 2 : COURT_WIDTH / 2;
   
   useFrame(({ clock }) => {
     if (!meshRef.current) return;
     const material = meshRef.current.material as THREE.MeshStandardMaterial;
-    material.opacity = 0.5 + Math.sin(clock.elapsedTime * 4) * 0.2;
+    material.opacity = 0.4 + Math.sin(clock.elapsedTime * 5) * 0.2;
+    material.emissiveIntensity = 0.6 + Math.sin(clock.elapsedTime * 5) * 0.3;
   });
   
   return (
     <mesh ref={meshRef} position={[x, 0.5, 0]}>
-      <boxGeometry args={[0.3, 2, COURT_DEPTH]} />
+      <boxGeometry args={[0.15, 1.5, COURT_DEPTH - 1]} />
       <meshStandardMaterial 
-        color={side === "player" ? "#00ffff" : "#ff4444"}
-        emissive={side === "player" ? "#00ffff" : "#ff4444"}
+        color={side === "player" ? "#00ffff" : "#ff6666"}
+        emissive={side === "player" ? "#00ffff" : "#ff6666"}
         emissiveIntensity={0.8}
         transparent
-        opacity={0.6}
+        opacity={0.5}
       />
     </mesh>
   );

@@ -61,6 +61,11 @@ server/
   - Victory confetti celebration when player wins
 - **Coin System**: Collect coins during gameplay to unlock skins and maps
 - **Power-ups**: Various power-ups spawn during rallies (assigned to last ball hitter)
+  - Big Paddle (green) - Enlarges your paddle temporarily
+  - Slow Ball (orange) - Slows the ball down
+  - Speed Boost (pink) - Faster paddle movement
+  - Multiball (cyan) - Spawns 2-3 extra balls that can each score
+  - Shield (yellow) - Blocks one goal attempt and bounces ball back
 
 ## Running the Game
 - Start with `npm run dev`
@@ -70,6 +75,13 @@ server/
 - Mobile: Use on-screen touch buttons to move paddle
 
 ## Recent Changes
+- December 25, 2025: Added shield and multiball power-ups
+  - Shield power-up blocks one goal and bounces ball back
+  - Multiball spawns 2-3 extra scoring balls
+  - Visual shield barriers with pulsing glow at goal lines
+  - HUD indicators for player/AI shields and multiball count
+  - Multiballs clear when main ball scores
+
 - December 25, 2025: Added visual polish and effects
   - Ball trail effect with fading particle spheres
   - Paddle glow/pulse animations using refs for performance

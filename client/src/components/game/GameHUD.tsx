@@ -6,7 +6,7 @@ import Confetti from "react-confetti";
 import { MainMenu } from "./MainMenu";
 
 export function GameHUD() {
-  const { phase, playerScore, aiScore, winner, round, combo, maxCombo, activeEffects, startGame, startNextRound, resetGame, pauseGame, resumeGame, menuState } = usePong();
+  const { phase, playerScore, aiScore, winner, round, combo, maxCombo, activeEffects, startGame, startNextRound, resetGame, pauseGame, resumeGame, menuState, playerShield, aiShield, multiballs } = usePong();
   const { isMuted, toggleMute } = useAudio();
   const [showFlash, setShowFlash] = useState(false);
   const [flashColor, setFlashColor] = useState("#ffffff");
@@ -123,18 +123,34 @@ export function GameHUD() {
             </div>
           )}
           
-          {playerEffects.length > 0 && (
-            <div className="absolute top-4 left-4 flex flex-col gap-1">
-              {playerEffects.map((effect, i) => (
-                <div 
-                  key={i} 
-                  className={`text-xs md:text-sm font-bold px-2 py-1 bg-black/50 rounded ${getEffectColor(effect.type)}`}
-                >
-                  {getEffectLabel(effect.type)}
-                </div>
-              ))}
-            </div>
-          )}
+          <div className="absolute top-4 left-4 flex flex-col gap-1">
+            {playerShield && (
+              <div className="text-xs md:text-sm font-bold px-2 py-1 bg-black/50 rounded text-cyan-400 animate-pulse">
+                YOUR SHIELD
+              </div>
+            )}
+            {multiballs.length > 0 && (
+              <div className="text-xs md:text-sm font-bold px-2 py-1 bg-black/50 rounded text-cyan-300">
+                MULTIBALLS: {multiballs.length}
+              </div>
+            )}
+            {playerEffects.map((effect, i) => (
+              <div 
+                key={i} 
+                className={`text-xs md:text-sm font-bold px-2 py-1 bg-black/50 rounded ${getEffectColor(effect.type)}`}
+              >
+                {getEffectLabel(effect.type)}
+              </div>
+            ))}
+          </div>
+          
+          <div className="absolute top-4 right-16 md:right-24 flex flex-col gap-1">
+            {aiShield && (
+              <div className="text-xs md:text-sm font-bold px-2 py-1 bg-black/50 rounded text-red-400 animate-pulse">
+                AI SHIELD
+              </div>
+            )}
+          </div>
           
           <div className="absolute bottom-28 md:bottom-8 left-1/2 -translate-x-1/2 text-center hidden md:block">
             <div className="text-gray-400 text-sm">

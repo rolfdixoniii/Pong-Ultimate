@@ -163,15 +163,21 @@ export const usePong = create<PongState>()(
     
     addMultiball: () => {
       const { multiballs } = get();
-      if (multiballs.length >= 2) return;
-      const id = `multiball-${Date.now()}`;
-      const angle = (Math.random() - 0.5) * Math.PI * 0.5;
-      const speed = 0.25;
-      set({
-        multiballs: [...multiballs, { 
+      if (multiballs.length >= 3) return;
+      const count = 2 + Math.floor(Math.random() * 2);
+      const newBalls = [];
+      for (let i = 0; i < count; i++) {
+        const id = `multiball-${Date.now()}-${i}`;
+        const angle = (Math.random() - 0.5) * Math.PI * 0.6;
+        const direction = Math.random() > 0.5 ? 1 : -1;
+        const speed = 0.2 + Math.random() * 0.1;
+        newBalls.push({ 
           id, 
-          velocity: { x: Math.cos(angle) * speed, z: Math.sin(angle) * speed }
-        }]
+          velocity: { x: Math.cos(angle) * speed * direction, z: Math.sin(angle) * speed }
+        });
+      }
+      set({
+        multiballs: [...multiballs, ...newBalls].slice(0, 4)
       });
     },
     
