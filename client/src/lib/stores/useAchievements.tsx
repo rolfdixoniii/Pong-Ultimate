@@ -393,10 +393,10 @@ export const useAchievements = create<AchievementsState>()(
 
       updateProgress: (id: AchievementId, amount: number) => {
         const { progress, pendingNotifications } = get();
-        const current = progress[id];
+        const current = progress[id] || { progress: 0, unlocked: false };
         const achievement = ACHIEVEMENTS[id];
         
-        if (current.unlocked) return;
+        if (!achievement || current.unlocked) return;
         
         const newProgress = Math.min(current.progress + amount, achievement.maxProgress);
         const shouldUnlock = newProgress >= achievement.maxProgress;
@@ -418,10 +418,10 @@ export const useAchievements = create<AchievementsState>()(
 
       setProgress: (id: AchievementId, value: number) => {
         const { progress, pendingNotifications } = get();
-        const current = progress[id];
+        const current = progress[id] || { progress: 0, unlocked: false };
         const achievement = ACHIEVEMENTS[id];
         
-        if (current.unlocked) return;
+        if (!achievement || current.unlocked) return;
         
         const newProgress = Math.min(value, achievement.maxProgress);
         const shouldUnlock = newProgress >= achievement.maxProgress;
@@ -443,10 +443,10 @@ export const useAchievements = create<AchievementsState>()(
 
       checkAndUnlock: (id: AchievementId) => {
         const { progress, pendingNotifications } = get();
-        const current = progress[id];
+        const current = progress[id] || { progress: 0, unlocked: false };
         const achievement = ACHIEVEMENTS[id];
         
-        if (current.unlocked) return false;
+        if (!achievement || current.unlocked) return false;
         
         if (current.progress >= achievement.maxProgress) {
           set({
@@ -510,6 +510,24 @@ export const useAchievements = create<AchievementsState>()(
         progress: state.progress,
         currentStreak: state.currentStreak,
       }),
+      merge: (persistedState, currentState) => {
+        const persisted = persistedState as Partial<AchievementsState>;
+        const mergedProgress = { ...initializeProgress() };
+        
+        if (persisted?.progress) {
+          for (const id of Object.keys(persisted.progress) as AchievementId[]) {
+            if (mergedProgress[id] && persisted.progress[id]) {
+              mergedProgress[id] = persisted.progress[id];
+            }
+          }
+        }
+        
+        return {
+          ...currentState,
+          progress: mergedProgress,
+          currentStreak: persisted?.currentStreak ?? 0,
+        };
+      },
     }
   )
 );
