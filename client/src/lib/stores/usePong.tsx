@@ -288,17 +288,14 @@ export const usePong = create<PongState>()(
     },
     
     incrementCombo: (hitBy) => {
-      const { combo, lastHitBy, maxCombo } = get();
-      if (hitBy === "player") {
-        const newCombo = lastHitBy === "player" ? combo + 1 : 1;
-        set({ 
-          combo: newCombo, 
-          lastHitBy: hitBy,
-          maxCombo: Math.max(maxCombo, newCombo)
-        });
-      } else {
-        set({ combo: 0, lastHitBy: hitBy });
-      }
+      const { combo, maxCombo } = get();
+      // Rally combo: increment on every hit (player or AI)
+      const newCombo = combo + 1;
+      set({ 
+        combo: newCombo, 
+        lastHitBy: hitBy,
+        maxCombo: Math.max(maxCombo, newCombo)
+      });
     },
     
     resetCombo: () => {

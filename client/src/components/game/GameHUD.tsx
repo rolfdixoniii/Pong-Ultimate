@@ -189,10 +189,13 @@ export function GameHUD() {
             </div>
           </div>
           
-          {combo > 1 && (
+          {combo > 2 && (
             <div className="absolute top-32 md:top-40 left-1/2 -translate-x-1/2 text-center animate-pulse">
               <div className="text-2xl md:text-4xl font-bold text-yellow-400">
-                {combo}x COMBO!
+                {combo}x RALLY!
+              </div>
+              <div className="text-xs md:text-sm text-yellow-300 mt-1">
+                Keep it going!
               </div>
             </div>
           )}
