@@ -12,7 +12,7 @@ const PADDLE_WIDTH = 0.5;
 const PADDLE_HEIGHT = 1;
 const PADDLE_DEPTH = 2.5;
 const BALL_RADIUS = 0.3;
-const CURVE_STRENGTH = 0.003;
+const CURVE_STRENGTH = 0.008;
 const CURVE_DECAY = 0.98;
 const TRAIL_LENGTH = 12;
 
