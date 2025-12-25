@@ -93,8 +93,10 @@ export function GameHUD() {
   
   if (phase === "menu") {
     return (
-      <div className="relative min-h-screen w-full pointer-events-auto overflow-auto" style={{ backgroundColor: '#0a0a0f' }}>
-        <MainMenu />
+      <div className="absolute inset-0 w-full h-full pointer-events-auto overflow-auto z-50" style={{ backgroundColor: '#0a0a0f' }}>
+        <div className="min-h-full py-8 px-4">
+          <MainMenu />
+        </div>
       </div>
     );
   }
