@@ -46,23 +46,23 @@ const BASE_DIFFICULTY: DifficultySettings = {
   aiSpeed: 0.25,
   aiReactionDelay: 0.08,
   aiPrediction: 0.3,
-  ballInitialSpeed: 0.3,
-  ballMaxSpeed: 0.6,
-  ballSpeedIncrement: 0.03,
+  ballInitialSpeed: 0.25, // Reduced from 0.3
+  ballMaxSpeed: 0.5,    // Reduced from 0.6
+  ballSpeedIncrement: 0.015, // Reduced from 0.03
   angleMultiplier: 1,
 };
 
 function getDifficultyForRound(round: number): DifficultySettings {
-  const scaleFactor = Math.min(round - 1, 5);
+  const scaleFactor = Math.min(round - 1, 8); // Scale for more rounds but less aggressively
 
   return {
-    aiSpeed: BASE_DIFFICULTY.aiSpeed + scaleFactor * 0.015,
-    aiReactionDelay: Math.max(BASE_DIFFICULTY.aiReactionDelay - scaleFactor * 0.025, 0.02),
-    aiPrediction: Math.min(scaleFactor * 0.15, 0.6),
-    ballInitialSpeed: BASE_DIFFICULTY.ballInitialSpeed + scaleFactor * 0.015,
-    ballMaxSpeed: BASE_DIFFICULTY.ballMaxSpeed + scaleFactor * 0.04,
-    ballSpeedIncrement: BASE_DIFFICULTY.ballSpeedIncrement + scaleFactor * 0.003,
-    angleMultiplier: BASE_DIFFICULTY.angleMultiplier + scaleFactor * 0.15,
+    aiSpeed: BASE_DIFFICULTY.aiSpeed + scaleFactor * 0.012,
+    aiReactionDelay: Math.max(BASE_DIFFICULTY.aiReactionDelay - scaleFactor * 0.02, 0.02),
+    aiPrediction: Math.min(scaleFactor * 0.12, 0.6),
+    ballInitialSpeed: BASE_DIFFICULTY.ballInitialSpeed + scaleFactor * 0.01,
+    ballMaxSpeed: BASE_DIFFICULTY.ballMaxSpeed + scaleFactor * 0.025,
+    ballSpeedIncrement: BASE_DIFFICULTY.ballSpeedIncrement + scaleFactor * 0.002,
+    angleMultiplier: BASE_DIFFICULTY.angleMultiplier + scaleFactor * 0.1,
   };
 }
 

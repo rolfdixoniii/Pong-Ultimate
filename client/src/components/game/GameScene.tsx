@@ -343,6 +343,13 @@ function Multiball({ id, velocity, playerPaddleRef, aiPaddleRef }: {
           velocity.x = Math.abs(velocity.x);
           const hitOffset = (ball.position.z - paddle.position.z) / (PADDLE_DEPTH / 2);
           velocity.z += hitOffset * 0.05;
+
+          // Angle clamping: Ensure |x| is at least 0.6x of |z| (roughly 60 degrees max angle)
+          const maxZRatio = 1.7;
+          if (Math.abs(velocity.z) > Math.abs(velocity.x) * maxZRatio) {
+            velocity.z = Math.sign(velocity.z) * Math.abs(velocity.x) * maxZRatio;
+          }
+
           playHit();
           break;
         }
@@ -360,6 +367,13 @@ function Multiball({ id, velocity, playerPaddleRef, aiPaddleRef }: {
           velocity.x = -Math.abs(velocity.x);
           const hitOffset = (ball.position.z - paddle.position.z) / (PADDLE_DEPTH / 2);
           velocity.z += hitOffset * 0.05;
+
+          // Angle clamping
+          const maxZRatio = 1.7;
+          if (Math.abs(velocity.z) > Math.abs(velocity.x) * maxZRatio) {
+            velocity.z = Math.sign(velocity.z) * Math.abs(velocity.x) * maxZRatio;
+          }
+
           playHit();
           break;
         }
@@ -546,6 +560,13 @@ function Ball({ playerPaddleRef, aiPaddleRef, playerPaddleVelocity, aiPaddleVelo
           velocity.x = Math.abs(velocity.x);
           const hitOffset = (ball.position.z - paddle.position.z) / (paddleDepth / 2);
           velocity.z += hitOffset * 0.05 * difficulty.angleMultiplier;
+
+          // Angle clamping: ensure ball doesn't go too vertical
+          const maxZRatio = 1.5; // Roughly 56 degrees
+          if (Math.abs(velocity.z) > Math.abs(velocity.x) * maxZRatio) {
+            velocity.z = Math.sign(velocity.z) * Math.abs(velocity.x) * maxZRatio;
+          }
+
           curveRef.current = (playerPaddleVelocity / frameScale) * CURVE_STRENGTH * 10;
 
           const currentSpeed = velocity.length();
@@ -593,6 +614,13 @@ function Ball({ playerPaddleRef, aiPaddleRef, playerPaddleVelocity, aiPaddleVelo
           velocity.x = -Math.abs(velocity.x);
           const hitOffset = (ball.position.z - paddle.position.z) / (paddleDepth / 2);
           velocity.z += hitOffset * 0.05 * difficulty.angleMultiplier;
+
+          // Angle clamping
+          const maxZRatio = 1.5;
+          if (Math.abs(velocity.z) > Math.abs(velocity.x) * maxZRatio) {
+            velocity.z = Math.sign(velocity.z) * Math.abs(velocity.x) * maxZRatio;
+          }
+
           curveRef.current = (aiPaddleVelocity / frameScale) * CURVE_STRENGTH * 10;
 
           const currentSpeed = velocity.length();
