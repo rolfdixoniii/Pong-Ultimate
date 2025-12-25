@@ -90,6 +90,8 @@ interface PongState {
   
   playerShield: boolean;
   aiShield: boolean;
+  playerShieldExpiry: number;
+  aiShieldExpiry: number;
   multiballs: { id: string; velocity: { x: number; z: number } }[];
   
   playerPowerHits: number;
@@ -165,6 +167,8 @@ export const usePong = create<PongState>()(
     
     playerShield: false,
     aiShield: false,
+    playerShieldExpiry: 0,
+    aiShieldExpiry: 0,
     multiballs: [],
     
     playerPowerHits: 0,
@@ -180,9 +184,9 @@ export const usePong = create<PongState>()(
       const shield = target === "player" ? get().playerShield : get().aiShield;
       if (shield) {
         if (target === "player") {
-          set({ playerShield: false });
+          set({ playerShield: false, playerShieldExpiry: 0 });
         } else {
-          set({ aiShield: false });
+          set({ aiShield: false, aiShieldExpiry: 0 });
         }
         return true;
       }
@@ -236,6 +240,8 @@ export const usePong = create<PongState>()(
         coinsCollected: 0,
         playerShield: false,
         aiShield: false,
+        playerShieldExpiry: 0,
+        aiShieldExpiry: 0,
         multiballs: [],
         playerPowerHits: 0,
         aiPowerHits: 0,
@@ -263,6 +269,8 @@ export const usePong = create<PongState>()(
         activeEffects: [],
         playerShield: false,
         aiShield: false,
+        playerShieldExpiry: 0,
+        aiShieldExpiry: 0,
         multiballs: [],
         playerPowerHits: 0,
         aiPowerHits: 0,
@@ -301,12 +309,15 @@ export const usePong = create<PongState>()(
         activeEffects: [],
         playerShield: false,
         aiShield: false,
+        playerShieldExpiry: 0,
+        aiShieldExpiry: 0,
         multiballs: [],
         playerPowerHits: 0,
         aiPowerHits: 0,
         activeSkinPower: null,
         predictionLine: null,
         electricTrailPos: null,
+        powerTriggersThisGame: 0,
       });
     },
     
@@ -475,10 +486,12 @@ export const usePong = create<PongState>()(
       const { powerTriggersThisGame } = get();
       
       if (type === "second_chance") {
+        const shieldDuration = 10000;
+        const expiryTime = Date.now() + shieldDuration;
         if (target === "player") {
-          set({ playerShield: true, playerPowerHits: 0, powerTriggersThisGame: powerTriggersThisGame + 1 });
+          set({ playerShield: true, playerShieldExpiry: expiryTime, playerPowerHits: 0, powerTriggersThisGame: powerTriggersThisGame + 1 });
         } else {
-          set({ aiShield: true, aiPowerHits: 0, powerTriggersThisGame: powerTriggersThisGame + 1 });
+          set({ aiShield: true, aiShieldExpiry: expiryTime, aiPowerHits: 0, powerTriggersThisGame: powerTriggersThisGame + 1 });
         }
         return;
       }
@@ -519,13 +532,27 @@ export const usePong = create<PongState>()(
     },
     
     updateSkinPowers: (currentTime) => {
-      const { activeSkinPower } = get();
+      const { activeSkinPower, playerShieldExpiry, aiShieldExpiry } = get();
+      const updates: any = {};
+      
       if (activeSkinPower && activeSkinPower.expiresAt > 0 && currentTime >= activeSkinPower.expiresAt) {
-        set({ 
-          activeSkinPower: null,
-          predictionLine: null,
-          electricTrailPos: null,
-        });
+        updates.activeSkinPower = null;
+        updates.predictionLine = null;
+        updates.electricTrailPos = null;
+      }
+      
+      if (playerShieldExpiry > 0 && currentTime >= playerShieldExpiry) {
+        updates.playerShield = false;
+        updates.playerShieldExpiry = 0;
+      }
+      
+      if (aiShieldExpiry > 0 && currentTime >= aiShieldExpiry) {
+        updates.aiShield = false;
+        updates.aiShieldExpiry = 0;
+      }
+      
+      if (Object.keys(updates).length > 0) {
+        set(updates);
       }
     },
     
