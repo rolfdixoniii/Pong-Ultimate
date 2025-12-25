@@ -74,6 +74,12 @@ export function MainMenu() {
           <div className="text-xs text-gray-400 mt-1">
             {xpProgress.current} / {xpProgress.required} XP
           </div>
+          <div className="mt-3 pt-3 border-t border-gray-700/50">
+            <div className="text-[10px] text-gray-500 uppercase font-extrabold tracking-widest mb-0.5">Player Profile</div>
+            <div className="text-sm font-black italic tracking-tighter" style={{ color: usernameColor }}>
+              {username || "PLAYER"}
+            </div>
+          </div>
         </div>
 
         <div className="text-center animate-fadeIn">
@@ -234,7 +240,7 @@ export function MainMenu() {
                         : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
                         }`}
                     >
-                      {isPlayerSelected ? '✓ Player' : 'Player'}
+                      {isPlayerSelected ? `✓ ${username || "Player"}` : username || "Player"}
                     </button>
                     <button
                       onClick={() => selectAISkin(skin.id)}
