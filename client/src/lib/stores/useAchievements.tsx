@@ -19,6 +19,11 @@ export type AchievementId =
   | "coin_collector_1000"
   | "fashionista"
   | "world_traveler"
+  | "awakened_first"
+  | "awakened_master"
+  | "power_first_trigger"
+  | "power_multiple_triggers"
+  | "second_chance_used"
   | "shield_hero"
   | "multiball_madness"
   | "speed_demon"
@@ -209,6 +214,56 @@ export const ACHIEVEMENTS: Record<AchievementId, Achievement> = {
     maxProgress: 5,
     xpReward: 300,
     coinReward: 50,
+  },
+  awakened_first: {
+    id: "awakened_first",
+    name: "Awakened Spirit",
+    description: "Unlock your first awakened paddle skin",
+    icon: "✨",
+    category: "progression",
+    maxProgress: 1,
+    xpReward: 200,
+    coinReward: 40,
+  },
+  awakened_master: {
+    id: "awakened_master",
+    name: "Master of the Awakened",
+    description: "Unlock all awakened paddle skins",
+    icon: "💫",
+    category: "progression",
+    maxProgress: 5,
+    xpReward: 500,
+    coinReward: 100,
+  },
+  power_first_trigger: {
+    id: "power_first_trigger",
+    name: "Power Activated",
+    description: "Trigger your first awakened skin power",
+    icon: "⚡",
+    category: "powerup",
+    maxProgress: 1,
+    xpReward: 150,
+    coinReward: 30,
+  },
+  power_multiple_triggers: {
+    id: "power_multiple_triggers",
+    name: "Power Surge",
+    description: "Trigger 10 awakened skin powers in a single game",
+    icon: "🔥",
+    category: "powerup",
+    maxProgress: 10,
+    xpReward: 300,
+    coinReward: 50,
+  },
+  second_chance_used: {
+    id: "second_chance_used",
+    name: "Second Chance",
+    description: "Block a goal using the Second Chance awakened power",
+    icon: "🛡️",
+    category: "powerup",
+    maxProgress: 1,
+    xpReward: 100,
+    coinReward: 20,
   },
   shield_hero: {
     id: "shield_hero",

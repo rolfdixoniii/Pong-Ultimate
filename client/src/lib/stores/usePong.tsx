@@ -97,6 +97,7 @@ interface PongState {
   activeSkinPower: ActiveSkinPower | null;
   predictionLine: { start: { x: number; z: number }; end: { x: number; z: number } } | null;
   electricTrailPos: { x: number; z: number } | null;
+  powerTriggersThisGame: number;
   
   setMenuState: (state: MenuState) => void;
   consumeShield: (target: "player" | "ai") => boolean;
@@ -171,6 +172,7 @@ export const usePong = create<PongState>()(
     activeSkinPower: null,
     predictionLine: null,
     electricTrailPos: null,
+    powerTriggersThisGame: 0,
     
     setMenuState: (menuState: MenuState) => set({ menuState }),
     
@@ -240,6 +242,7 @@ export const usePong = create<PongState>()(
         activeSkinPower: null,
         predictionLine: null,
         electricTrailPos: null,
+        powerTriggersThisGame: 0,
       });
     },
     
@@ -469,12 +472,13 @@ export const usePong = create<PongState>()(
     
     triggerSkinPower: (target, type, duration) => {
       const expiresAt = duration > 0 ? Date.now() + duration : 0;
+      const { powerTriggersThisGame } = get();
       
       if (type === "second_chance") {
         if (target === "player") {
-          set({ playerShield: true, playerPowerHits: 0 });
+          set({ playerShield: true, playerPowerHits: 0, powerTriggersThisGame: powerTriggersThisGame + 1 });
         } else {
-          set({ aiShield: true, aiPowerHits: 0 });
+          set({ aiShield: true, aiPowerHits: 0, powerTriggersThisGame: powerTriggersThisGame + 1 });
         }
         return;
       }
@@ -482,7 +486,8 @@ export const usePong = create<PongState>()(
       if (type === "power_shot" || type === "inferno_curve") {
         set({ 
           activeSkinPower: { target, type, expiresAt: duration > 0 ? Date.now() + duration : Date.now() + 500 },
-          [target === "player" ? "playerPowerHits" : "aiPowerHits"]: 0
+          [target === "player" ? "playerPowerHits" : "aiPowerHits"]: 0,
+          powerTriggersThisGame: powerTriggersThisGame + 1
         });
         return;
       }
@@ -490,7 +495,8 @@ export const usePong = create<PongState>()(
       if (type === "frozen_vision" || type === "electric_trail") {
         set({ 
           activeSkinPower: { target, type, expiresAt },
-          [target === "player" ? "playerPowerHits" : "aiPowerHits"]: 0
+          [target === "player" ? "playerPowerHits" : "aiPowerHits"]: 0,
+          powerTriggersThisGame: powerTriggersThisGame + 1
         });
         return;
       }

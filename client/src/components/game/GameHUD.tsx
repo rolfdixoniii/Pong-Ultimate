@@ -10,8 +10,8 @@ import { MainMenu } from "./MainMenu";
 import { AchievementToast } from "./AchievementToast";
 
 export function GameHUD() {
-  const { phase, playerScore, aiScore, winner, round, combo, maxCombo, activeEffects, startGame, startNextRound, resetGame, pauseGame, resumeGame, menuState, playerShield, aiShield, multiballs, playerPowerHits, activeSkinPower } = usePong();
-  const { getPlayerPower } = useSkins();
+  const { phase, playerScore, aiScore, winner, round, combo, maxCombo, activeEffects, startGame, startNextRound, resetGame, pauseGame, resumeGame, menuState, playerShield, aiShield, multiballs, playerPowerHits, activeSkinPower, powerTriggersThisGame } = usePong();
+  const { getPlayerPower, unlockedSkins } = useSkins();
   const { isMuted, toggleMute } = useAudio();
   const { level, pendingRewards, clearPendingRewards, recordRoundWin, recordRoundLoss, recordGameWin, recordGameLoss, getXpProgress, coins, stats } = useProgression();
   const { updateProgress, setProgress, incrementStreak, resetStreak, currentStreak } = useAchievements();
@@ -67,13 +67,36 @@ export function GameHUD() {
     setProgress("rising_star_5", level);
     setProgress("rising_star_10", level);
     setProgress("rising_star_15", level);
-  }, [level, setProgress]);
+    
+    const awokenedCount = unlockedSkins.filter(s => 
+      s.includes("awakened")
+    ).length;
+    if (awokenedCount > 0) {
+      updateProgress("awakened_first", 1);
+    }
+    setProgress("awakened_master", awokenedCount);
+  }, [level, setProgress, unlockedSkins, updateProgress]);
   
   useEffect(() => {
     setProgress("coin_collector_100", stats.totalCoinsEarned);
     setProgress("coin_collector_500", stats.totalCoinsEarned);
     setProgress("coin_collector_1000", stats.totalCoinsEarned);
   }, [stats.totalCoinsEarned, setProgress]);
+  
+  useEffect(() => {
+    if (activeSkinPower) {
+      updateProgress("power_first_trigger", 1);
+      if (activeSkinPower.type === "second_chance") {
+        updateProgress("second_chance_used", 1);
+      }
+    }
+  }, [activeSkinPower, updateProgress]);
+  
+  useEffect(() => {
+    if (powerTriggersThisGame > 0) {
+      setProgress("power_multiple_triggers", Math.min(powerTriggersThisGame, 10));
+    }
+  }, [powerTriggersThisGame, setProgress]);
   const [showFlash, setShowFlash] = useState(false);
   const [flashColor, setFlashColor] = useState("#ffffff");
   const prevPlayerScore = useRef(playerScore);
