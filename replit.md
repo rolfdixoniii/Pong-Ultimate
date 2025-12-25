@@ -81,6 +81,15 @@ server/
 - Mobile: Use on-screen touch buttons to move paddle
 
 ## Recent Changes
+- December 25, 2025: Added achievements system
+  - Created useAchievements store with 25+ achievements across 4 categories
+  - Achievements menu accessible from main menu
+  - Toast notifications when achievements unlock
+  - Achievement categories: Gameplay, Progression, Power-ups, Skill
+  - XP and coin rewards for unlocking achievements
+  - Progress tracking for multi-step achievements
+  - Persistent achievement data via localStorage
+
 - December 25, 2025: Added progression and rewards system
   - Created useProgression store with XP, levels, coins, and stats
   - Player earns XP and coins for winning rounds

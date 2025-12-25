@@ -2,6 +2,8 @@ import { usePong } from "@/lib/stores/usePong";
 import { useSkins } from "@/lib/stores/useSkins";
 import { useAudio } from "@/lib/stores/useAudio";
 import { useProgression } from "@/lib/stores/useProgression";
+import { useAchievements } from "@/lib/stores/useAchievements";
+import { AchievementsMenu } from "./AchievementsMenu";
 
 export function MainMenu() {
   const { startGame, resetGame } = usePong();
@@ -48,6 +50,13 @@ export function MainMenu() {
               className="px-8 md:px-12 py-3 md:py-4 bg-purple-600 hover:bg-purple-500 active:bg-purple-400 text-white text-lg md:text-xl font-bold rounded-lg transition-colors"
             >
               SKINS & MAPS
+            </button>
+            
+            <button 
+              onClick={() => setMenuState("achievements")}
+              className="px-8 md:px-12 py-3 md:py-4 bg-yellow-600 hover:bg-yellow-500 active:bg-yellow-400 text-white text-lg md:text-xl font-bold rounded-lg transition-colors"
+            >
+              ACHIEVEMENTS
             </button>
             
             <button 
@@ -336,6 +345,14 @@ export function MainMenu() {
             </div>
           </div>
         </div>
+      </div>
+    );
+  }
+  
+  if (menuState === "achievements") {
+    return (
+      <div className="absolute inset-0 overflow-auto bg-gradient-to-b from-gray-900 to-black pointer-events-auto px-4 py-8">
+        <AchievementsMenu onBack={() => setMenuState("main")} />
       </div>
     );
   }

@@ -1,32 +1,77 @@
 import { usePong } from "@/lib/stores/usePong";
 import { useAudio } from "@/lib/stores/useAudio";
 import { useProgression } from "@/lib/stores/useProgression";
+import { useAchievements } from "@/lib/stores/useAchievements";
 import { useEffect, useState, useRef } from "react";
 import Confetti from "react-confetti";
 
 import { MainMenu } from "./MainMenu";
+import { AchievementToast } from "./AchievementToast";
 
 export function GameHUD() {
   const { phase, playerScore, aiScore, winner, round, combo, maxCombo, activeEffects, startGame, startNextRound, resetGame, pauseGame, resumeGame, menuState, playerShield, aiShield, multiballs } = usePong();
   const { isMuted, toggleMute } = useAudio();
-  const { level, pendingRewards, clearPendingRewards, recordRoundWin, recordRoundLoss, recordGameWin, recordGameLoss, getXpProgress } = useProgression();
+  const { level, pendingRewards, clearPendingRewards, recordRoundWin, recordRoundLoss, recordGameWin, recordGameLoss, getXpProgress, coins, stats } = useProgression();
+  const { updateProgress, setProgress, incrementStreak, resetStreak, currentStreak } = useAchievements();
   const xpProgress = getXpProgress();
   const prevPhaseRef = useRef(phase);
   const prevWinnerRef = useRef(winner);
+  const wasDown4_0 = useRef(false);
+  
+  useEffect(() => {
+    if (playerScore === 0 && aiScore === 4) {
+      wasDown4_0.current = true;
+    }
+  }, [playerScore, aiScore]);
   
   useEffect(() => {
     if (prevPhaseRef.current === "playing" && phase === "gameOver") {
       if (winner === "player") {
         recordRoundWin(round, maxCombo, playerScore);
         recordGameWin(round);
+        
+        updateProgress("first_victory", 1);
+        
+        const newStreak = currentStreak + 1;
+        incrementStreak();
+        setProgress("winning_streak_3", newStreak);
+        setProgress("winning_streak_5", newStreak);
+        setProgress("winning_streak_10", newStreak);
+        
+        setProgress("round_champion_5", round);
+        setProgress("round_champion_10", round);
+        
+        if (maxCombo >= 5) updateProgress("combo_5", 1);
+        if (maxCombo >= 10) updateProgress("combo_10", 1);
+        if (maxCombo >= 15) updateProgress("combo_15", 1);
+        
+        if (aiScore === 0) updateProgress("untouchable", 1);
+        
+        if (wasDown4_0.current) {
+          updateProgress("comeback_kid", 1);
+        }
       } else {
         recordRoundLoss();
         recordGameLoss();
+        resetStreak();
       }
+      wasDown4_0.current = false;
     }
     prevPhaseRef.current = phase;
     prevWinnerRef.current = winner;
-  }, [phase, winner, round, maxCombo, playerScore, recordRoundWin, recordRoundLoss, recordGameWin, recordGameLoss]);
+  }, [phase, winner, round, maxCombo, playerScore, aiScore, recordRoundWin, recordRoundLoss, recordGameWin, recordGameLoss, updateProgress, setProgress, incrementStreak, resetStreak]);
+  
+  useEffect(() => {
+    setProgress("rising_star_5", level);
+    setProgress("rising_star_10", level);
+    setProgress("rising_star_15", level);
+  }, [level, setProgress]);
+  
+  useEffect(() => {
+    setProgress("coin_collector_100", stats.totalCoinsEarned);
+    setProgress("coin_collector_500", stats.totalCoinsEarned);
+    setProgress("coin_collector_1000", stats.totalCoinsEarned);
+  }, [stats.totalCoinsEarned, setProgress]);
   const [showFlash, setShowFlash] = useState(false);
   const [flashColor, setFlashColor] = useState("#ffffff");
   const prevPlayerScore = useRef(playerScore);
@@ -307,6 +352,8 @@ export function GameHUD() {
       >
         {isMuted ? "🔇" : "🔊"}
       </button>
+      
+      <AchievementToast />
     </div>
   );
 }

@@ -2,7 +2,7 @@ import { create } from "zustand";
 import { subscribeWithSelector } from "zustand/middleware";
 
 export type GamePhase = "menu" | "playing" | "paused" | "gameOver";
-export type MenuState = "main" | "skins" | "settings" | "maps";
+export type MenuState = "main" | "skins" | "settings" | "maps" | "achievements";
 
 export type PowerUpType = "bigPaddle" | "slowBall" | "multiball" | "speedBoost" | "shield";
 
