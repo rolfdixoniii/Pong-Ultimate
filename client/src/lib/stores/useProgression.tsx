@@ -20,6 +20,7 @@ interface ProgressionState {
   coins: number;
   username: string;
   usernameColor: string;
+  aiDifficulty: "easy" | "normal" | "hard";
   stats: PlayerStats;
 
   pendingRewards: {
@@ -37,6 +38,7 @@ interface ProgressionState {
   spendCoins: (amount: number) => boolean;
   setUsername: (name: string) => void;
   setUsernameColor: (color: string) => void;
+  setAIDifficulty: (difficulty: "easy" | "normal" | "hard") => void;
 
   recordRoundWin: (round: number, combo: number, pointsScored: number) => void;
   recordRoundLoss: () => void;
@@ -73,6 +75,7 @@ export const useProgression = create<ProgressionState>()(
       coins: 0,
       username: "PLAYER",
       usernameColor: "#4fc3f7",
+      aiDifficulty: "normal",
       stats: { ...initialStats },
       pendingRewards: null,
 
@@ -214,7 +217,8 @@ export const useProgression = create<ProgressionState>()(
       },
 
       setUsername: (name: string) => set({ username: name.slice(0, 15) }),
-      setUsernameColor: (color: string) => set({ usernameColor: color }),
+      setUsernameColor: (usernameColor: string) => set({ usernameColor }),
+      setAIDifficulty: (aiDifficulty: "easy" | "normal" | "hard") => set({ aiDifficulty }),
 
       resetStats: () => {
         set({

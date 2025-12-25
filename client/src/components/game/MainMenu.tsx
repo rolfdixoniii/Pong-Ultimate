@@ -45,6 +45,8 @@ export function MainMenu() {
   const usernameColor = useProgression((state: any) => state.usernameColor);
   const setUsername = useProgression((state: any) => state.setUsername);
   const setUsernameColor = useProgression((state: any) => state.setUsernameColor);
+  const aiDifficulty = useProgression((state: any) => state.aiDifficulty);
+  const setAIDifficulty = useProgression((state: any) => state.setAIDifficulty);
 
   const [tempUsername, setTempUsername] = useState(username);
 
@@ -88,7 +90,7 @@ export function MainMenu() {
 
           <div className="flex flex-col gap-3 md:gap-4">
             <button
-              onClick={startGame}
+              onClick={() => startGame(aiDifficulty)}
               className="px-8 md:px-12 py-3 md:py-4 bg-cyan-600 hover:bg-cyan-500 active:bg-cyan-400 text-white text-xl md:text-2xl font-bold rounded-lg transition-all duration-200 hover:scale-105 hover:shadow-lg hover:shadow-cyan-500/30"
             >
               START GAME
