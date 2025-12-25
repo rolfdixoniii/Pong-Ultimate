@@ -16,6 +16,7 @@ export function AchievementToast() {
           setCurrentAchievement(notification.achievement);
           setIsVisible(true);
           
+          // Award the rewards
           addXp(notification.achievement.xpReward);
           addCoins(notification.achievement.coinReward);
           
@@ -29,7 +30,7 @@ export function AchievementToast() {
       }
     };
 
-    const interval = setInterval(checkNotifications, 500);
+    const interval = setInterval(checkNotifications, 100);
     return () => clearInterval(interval);
   }, [currentAchievement, popNotification, addXp, addCoins]);
 
