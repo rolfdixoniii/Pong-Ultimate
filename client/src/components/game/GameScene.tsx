@@ -45,7 +45,7 @@ function PlayerPaddle({ paddleRef, onVelocityUpdate }: {
   const paddleColor = isFlashing ? "#ffffff" : skinData?.color || "#4fc3f7";
   const emissiveColor = isFlashing ? "#ffffff" : skinData?.emissiveColor || "#4fc3f7";
   
-  useFrame(({ clock }) => {
+  useFrame(({ clock }, delta) => {
     if (!paddleRef.current) return;
     const { forward, backward } = getKeys();
     const prevZ = paddleRef.current.position.z;
@@ -614,55 +614,63 @@ function Ball({ playerPaddleRef, aiPaddleRef, playerPaddleVelocity, aiPaddleVelo
   );
 }
 
+const trailGeometries = Array.from({ length: TRAIL_LENGTH }, (_, i) => 
+  new THREE.SphereGeometry(BALL_RADIUS * (1 - i / TRAIL_LENGTH) * 0.7, 6, 6)
+);
+
 function BallTrail() {
   const trailMeshes = useRef<THREE.Mesh[]>([]);
   
   useFrame(() => {
-    trailMeshes.current.forEach((mesh, i) => {
+    for (let i = 0; i < trailMeshes.current.length; i++) {
+      const mesh = trailMeshes.current[i];
       if (mesh && trailPositions[i]) {
         mesh.position.copy(trailPositions[i]);
       }
-    });
+    }
   });
   
   return (
     <>
-      {trailPositions.map((_, i) => (
-        <mesh 
-          key={i} 
-          ref={(el) => { if (el) trailMeshes.current[i] = el; }}
-          position={[0, BALL_RADIUS, 0]}
-        >
-          <sphereGeometry args={[BALL_RADIUS * (1 - i / TRAIL_LENGTH) * 0.8, 8, 8]} />
-          <meshStandardMaterial 
-            color="#88ccff"
-            emissive="#4488ff"
-            emissiveIntensity={0.5 * (1 - i / TRAIL_LENGTH)}
-            transparent
-            opacity={0.6 * (1 - i / TRAIL_LENGTH)}
-          />
-        </mesh>
-      ))}
+      {trailGeometries.map((geo, i) => {
+        const opacity = 0.5 * (1 - i / TRAIL_LENGTH);
+        return (
+          <mesh 
+            key={i} 
+            ref={(el) => { if (el) trailMeshes.current[i] = el; }}
+            position={[0, BALL_RADIUS, 0]}
+            geometry={geo}
+          >
+            <meshBasicMaterial 
+              color="#88ccff"
+              transparent
+              opacity={opacity}
+            />
+          </mesh>
+        );
+      })}
     </>
   );
 }
 
-function CameraShake() {
-  const screenShake = usePong(state => state.screenShake);
-  const groupRef = useRef<THREE.Group>(null);
+function SmoothCamera() {
+  const cameraTarget = useRef(new THREE.Vector3(0, 0, 0));
   
-  useFrame(() => {
-    if (!groupRef.current) return;
-    if (screenShake > 0) {
-      groupRef.current.position.x = (Math.random() - 0.5) * screenShake * 2;
-      groupRef.current.position.y = (Math.random() - 0.5) * screenShake * 2;
-    } else {
-      groupRef.current.position.x = 0;
-      groupRef.current.position.y = 0;
-    }
+  useFrame(({ camera }, delta) => {
+    const ballPos = ballPositionRef.current;
+    const targetX = ballPos.x * 0.15;
+    const targetZ = ballPos.z * 0.08;
+    
+    cameraTarget.current.lerp(
+      new THREE.Vector3(targetX, 0, targetZ),
+      1 - Math.pow(0.02, delta)
+    );
+    
+    camera.position.x = cameraTarget.current.x;
+    camera.lookAt(cameraTarget.current.x, 0, cameraTarget.current.z);
   });
   
-  return <group ref={groupRef} />;
+  return null;
 }
 
 export function GameScene() {
@@ -702,6 +710,7 @@ export function GameScene() {
   
   return (
     <group ref={groupRef}>
+      <SmoothCamera />
       <Court map={currentMap} />
       <PlayerPaddle 
         paddleRef={playerPaddleRef} 

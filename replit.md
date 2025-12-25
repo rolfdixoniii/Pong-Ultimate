@@ -81,6 +81,14 @@ server/
 - Mobile: Use on-screen touch buttons to move paddle
 
 ## Recent Changes
+- December 25, 2025: Visual and performance improvements
+  - Added bloom and vignette post-processing effects
+  - Smooth camera follow that tracks ball with damping
+  - Optimized ball trail with pre-allocated geometries
+  - Menu animations (fadeIn, pulse, hover scale effects)
+  - Button hover glow shadows for better feedback
+  - Performance-adaptive DPR scaling
+
 - December 25, 2025: Added achievements system
   - Created useAchievements store with 25+ achievements across 4 categories
   - Achievements menu accessible from main menu

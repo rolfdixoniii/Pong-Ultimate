@@ -17,14 +17,14 @@ export function MainMenu() {
   if (menuState === "main") {
     return (
       <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-b from-gray-900 to-black pointer-events-auto px-4">
-        <div className="absolute top-4 md:top-8 left-4 md:left-8 bg-gray-800/80 rounded-lg p-3 md:p-4">
+        <div className="absolute top-4 md:top-8 left-4 md:left-8 bg-gray-800/80 rounded-lg p-3 md:p-4 animate-fadeIn">
           <div className="flex items-center gap-3 mb-2">
             <div className="text-yellow-400 font-bold text-lg md:text-xl">LVL {level}</div>
             <div className="text-yellow-500 font-semibold">💰 {coins}</div>
           </div>
           <div className="w-32 md:w-40 h-2 bg-gray-700 rounded-full overflow-hidden">
             <div 
-              className="h-full bg-gradient-to-r from-cyan-500 to-purple-500 transition-all duration-300"
+              className="h-full bg-gradient-to-r from-cyan-500 to-purple-500 transition-all duration-500 ease-out"
               style={{ width: `${xpProgress.percentage}%` }}
             />
           </div>
@@ -33,35 +33,35 @@ export function MainMenu() {
           </div>
         </div>
         
-        <div className="text-center">
-          <h1 className="text-4xl md:text-7xl font-bold text-white mb-2 md:mb-4">3D PONG</h1>
+        <div className="text-center animate-fadeIn">
+          <h1 className="text-4xl md:text-7xl font-bold text-white mb-2 md:mb-4 animate-pulse-subtle">3D PONG</h1>
           <p className="text-base md:text-xl text-gray-400 mb-8 md:mb-12">Classic arcade game reimagined</p>
           
           <div className="flex flex-col gap-3 md:gap-4">
             <button 
               onClick={startGame}
-              className="px-8 md:px-12 py-3 md:py-4 bg-cyan-600 hover:bg-cyan-500 active:bg-cyan-400 text-white text-xl md:text-2xl font-bold rounded-lg transition-colors"
+              className="px-8 md:px-12 py-3 md:py-4 bg-cyan-600 hover:bg-cyan-500 active:bg-cyan-400 text-white text-xl md:text-2xl font-bold rounded-lg transition-all duration-200 hover:scale-105 hover:shadow-lg hover:shadow-cyan-500/30"
             >
               START GAME
             </button>
             
             <button 
               onClick={() => setMenuState("skins")}
-              className="px-8 md:px-12 py-3 md:py-4 bg-purple-600 hover:bg-purple-500 active:bg-purple-400 text-white text-lg md:text-xl font-bold rounded-lg transition-colors"
+              className="px-8 md:px-12 py-3 md:py-4 bg-purple-600 hover:bg-purple-500 active:bg-purple-400 text-white text-lg md:text-xl font-bold rounded-lg transition-all duration-200 hover:scale-105 hover:shadow-lg hover:shadow-purple-500/30"
             >
               SKINS & MAPS
             </button>
             
             <button 
               onClick={() => setMenuState("achievements")}
-              className="px-8 md:px-12 py-3 md:py-4 bg-yellow-600 hover:bg-yellow-500 active:bg-yellow-400 text-white text-lg md:text-xl font-bold rounded-lg transition-colors"
+              className="px-8 md:px-12 py-3 md:py-4 bg-yellow-600 hover:bg-yellow-500 active:bg-yellow-400 text-white text-lg md:text-xl font-bold rounded-lg transition-all duration-200 hover:scale-105 hover:shadow-lg hover:shadow-yellow-500/30"
             >
               ACHIEVEMENTS
             </button>
             
             <button 
               onClick={() => setMenuState("settings")}
-              className="px-8 md:px-12 py-3 md:py-4 bg-gray-600 hover:bg-gray-500 active:bg-gray-400 text-white text-lg md:text-xl font-bold rounded-lg transition-colors"
+              className="px-8 md:px-12 py-3 md:py-4 bg-gray-600 hover:bg-gray-500 active:bg-gray-400 text-white text-lg md:text-xl font-bold rounded-lg transition-all duration-200 hover:scale-105"
             >
               SETTINGS
             </button>
@@ -76,7 +76,7 @@ export function MainMenu() {
           </div>
         </div>
         
-        <div className="absolute top-4 md:top-8 right-4 md:right-8 bg-gray-800/80 rounded-lg p-3 md:p-4 text-right text-xs md:text-sm">
+        <div className="absolute top-4 md:top-8 right-4 md:right-8 bg-gray-800/80 rounded-lg p-3 md:p-4 text-right text-xs md:text-sm animate-fadeIn">
           <div className="text-gray-400">Games: {stats.gamesPlayed}</div>
           <div className="text-green-400">Wins: {stats.gamesWon}</div>
           <div className="text-cyan-400">Best Combo: {stats.maxCombo}x</div>

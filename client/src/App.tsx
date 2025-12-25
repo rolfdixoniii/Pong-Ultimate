@@ -1,6 +1,7 @@
 import { Canvas } from "@react-three/fiber";
 import { Suspense, useEffect, useState } from "react";
 import { KeyboardControls, PerformanceMonitor } from "@react-three/drei";
+import { EffectComposer, Bloom, Vignette } from "@react-three/postprocessing";
 import "@fontsource/inter";
 import { GameScene } from "./components/game/GameScene";
 import { GameHUD } from "./components/game/GameHUD";
@@ -60,6 +61,15 @@ function App() {
               
               <Suspense fallback={null}>
                 <GameScene />
+                <EffectComposer>
+                  <Bloom 
+                    intensity={0.4}
+                    luminanceThreshold={0.6}
+                    luminanceSmoothing={0.9}
+                    mipmapBlur
+                  />
+                  <Vignette darkness={0.3} offset={0.3} />
+                </EffectComposer>
               </Suspense>
             </Canvas>
             
