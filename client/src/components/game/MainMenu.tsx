@@ -428,6 +428,24 @@ export function MainMenu() {
             </div>
 
             <div className="border-t border-gray-700 pt-6">
+              <div className="text-white text-lg mb-3 font-semibold">AI Difficulty</div>
+              <div className="grid grid-cols-3 gap-2">
+                {(["easy", "normal", "hard"] as const).map((difficulty) => (
+                  <button
+                    key={difficulty}
+                    onClick={() => setAIDifficulty(difficulty)}
+                    className={`px-3 py-2 rounded text-sm font-bold transition-colors ${aiDifficulty === difficulty
+                      ? "bg-red-600 text-white"
+                      : "bg-gray-700 text-gray-300 hover:bg-gray-600"
+                      }`}
+                  >
+                    {difficulty.charAt(0).toUpperCase() + difficulty.slice(1)}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div className="border-t border-gray-700 pt-6">
               <div className="text-white text-lg mb-3 font-semibold">Game Speed</div>
               <div className="grid grid-cols-4 gap-2">
                 {(["slow", "medium", "fast", "superfast"] as const).map((speed) => (
