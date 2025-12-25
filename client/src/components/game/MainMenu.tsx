@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { usePong } from "@/lib/stores/usePong";
 import { useSkins } from "@/lib/stores/useSkins";
 import { useAudio } from "@/lib/stores/useAudio";
@@ -39,6 +40,22 @@ export function MainMenu() {
   const xpProgress = getXpProgress();
   const gameSpeed = useGameSpeed((state: any) => state.gameSpeed);
   const setGameSpeed = useGameSpeed((state: any) => state.setGameSpeed);
+
+  const username = useProgression((state: any) => state.username);
+  const usernameColor = useProgression((state: any) => state.usernameColor);
+  const setUsername = useProgression((state: any) => state.setUsername);
+  const setUsernameColor = useProgression((state: any) => state.setUsernameColor);
+
+  const [tempUsername, setTempUsername] = useState(username);
+
+  const PLAYER_COLORS = [
+    { name: "Cyan", value: "#4fc3f7" },
+    { name: "Pink", value: "#f06292" },
+    { name: "Lime", value: "#aed581" },
+    { name: "Amber", value: "#ffb74d" },
+    { name: "Purple", value: "#ba68c8" },
+    { name: "White", value: "#ffffff" },
+  ];
 
   if (menuState === "main") {
     return (
@@ -359,7 +376,49 @@ export function MainMenu() {
               </div>
             </div>
 
-            <div>
+            <div className="border-t border-gray-700 pt-6">
+              <div className="text-white text-lg mb-4 font-semibold">Player Profile</div>
+
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-gray-400 text-xs mb-1 ml-1 uppercase font-bold tracking-wider">Username</label>
+                  <input
+                    type="text"
+                    value={tempUsername}
+                    onChange={(e) => {
+                      setTempUsername(e.target.value.slice(0, 15));
+                      setUsername(e.target.value.slice(0, 15));
+                    }}
+                    placeholder="Enter Username"
+                    className="w-full bg-gray-900 border border-gray-700 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-cyan-500 transition-colors font-bold tracking-wide"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-gray-400 text-xs mb-2 ml-1 uppercase font-bold tracking-wider">Name Color</label>
+                  <div className="flex flex-wrap gap-3">
+                    {PLAYER_COLORS.map((color) => (
+                      <button
+                        key={color.value}
+                        onClick={() => setUsernameColor(color.value)}
+                        className={`w-10 h-10 rounded-full border-2 transition-all transform hover:scale-110 ${usernameColor === color.value ? 'border-white scale-110 shadow-lg' : 'border-transparent'}`}
+                        style={{ backgroundColor: color.value, boxShadow: usernameColor === color.value ? `0 0 15px ${color.value}` : 'none' }}
+                        title={color.name}
+                      />
+                    ))}
+                  </div>
+                </div>
+
+                <div className="bg-gray-900/50 p-4 rounded-lg border border-gray-700">
+                  <div className="text-gray-400 text-xs mb-1 uppercase font-bold">Preview</div>
+                  <div className="text-2xl font-black tracking-tighter italic" style={{ color: usernameColor }}>
+                    {username || "PLAYER"}
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="border-t border-gray-700 pt-6">
               <div className="text-white text-lg mb-3 font-semibold">Game Speed</div>
               <div className="grid grid-cols-4 gap-2">
                 {(["slow", "medium", "fast", "superfast"] as const).map((speed) => (

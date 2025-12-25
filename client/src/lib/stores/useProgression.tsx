@@ -18,6 +18,8 @@ interface ProgressionState {
   xp: number;
   level: number;
   coins: number;
+  username: string;
+  usernameColor: string;
   stats: PlayerStats;
 
   pendingRewards: {
@@ -33,6 +35,8 @@ interface ProgressionState {
   addXp: (amount: number) => void;
   addCoins: (amount: number) => void;
   spendCoins: (amount: number) => boolean;
+  setUsername: (name: string) => void;
+  setUsernameColor: (color: string) => void;
 
   recordRoundWin: (round: number, combo: number, pointsScored: number) => void;
   recordRoundLoss: () => void;
@@ -67,6 +71,8 @@ export const useProgression = create<ProgressionState>()(
       xp: 0,
       level: 1,
       coins: 0,
+      username: "PLAYER",
+      usernameColor: "#4fc3f7",
       stats: { ...initialStats },
       pendingRewards: null,
 
@@ -206,6 +212,9 @@ export const useProgression = create<ProgressionState>()(
       clearPendingRewards: () => {
         set({ pendingRewards: null });
       },
+
+      setUsername: (name: string) => set({ username: name.slice(0, 15) }),
+      setUsernameColor: (color: string) => set({ usernameColor: color }),
 
       resetStats: () => {
         set({

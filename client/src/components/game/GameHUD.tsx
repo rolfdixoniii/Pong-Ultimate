@@ -32,7 +32,7 @@ export function GameHUD() {
   const powerTriggersThisGame = usePong((state: any) => state.powerTriggersThisGame);
   const { getPlayerPower, unlockedSkins } = useSkins();
   const { isMuted, toggleMute } = useAudio();
-  const { level, pendingRewards, clearPendingRewards, recordRoundWin, recordRoundLoss, recordGameWin, recordGameLoss, getXpProgress, coins, stats } = useProgression();
+  const { level, pendingRewards, clearPendingRewards, recordRoundWin, recordRoundLoss, recordGameWin, recordGameLoss, getXpProgress, coins, stats, username, usernameColor } = useProgression();
   const { updateProgress, setProgress, incrementStreak, resetStreak, currentStreak } = useAchievements();
   const xpProgress = getXpProgress();
   const prevPhaseRef = useRef(phase);
@@ -227,8 +227,8 @@ export function GameHUD() {
             </div>
             <div className="flex items-center gap-4 md:gap-8">
               <div className="text-center">
-                <div className="text-xs md:text-sm text-cyan-400 mb-0.5 md:mb-1">PLAYER</div>
-                <div className="text-3xl md:text-6xl font-bold text-cyan-400">{playerScore}</div>
+                <div className="text-xs md:text-sm font-bold mb-0.5 md:mb-1 uppercase" style={{ color: usernameColor }}>{username || "PLAYER"}</div>
+                <div className="text-3xl md:text-6xl font-bold" style={{ color: usernameColor }}>{playerScore}</div>
               </div>
               <div className="text-2xl md:text-4xl text-gray-500">-</div>
               <div className="text-center">
