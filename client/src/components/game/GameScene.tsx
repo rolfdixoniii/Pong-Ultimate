@@ -14,9 +14,11 @@ const PADDLE_DEPTH = 2.5;
 const BALL_RADIUS = 0.3;
 const CURVE_STRENGTH = 0.003;
 const CURVE_DECAY = 0.98;
+const TRAIL_LENGTH = 12;
 
 const ballPositionRef = { current: new THREE.Vector3(0, BALL_RADIUS, 0) };
 const ballVelocityRef = { current: new THREE.Vector3(0, 0, 0) };
+const trailPositions: THREE.Vector3[] = Array.from({ length: TRAIL_LENGTH }, () => new THREE.Vector3(0, BALL_RADIUS, 0));
 
 function PlayerPaddle({ paddleRef, onVelocityUpdate }: { 
   paddleRef: React.RefObject<THREE.Mesh>;
@@ -37,10 +39,13 @@ function PlayerPaddle({ paddleRef, onVelocityUpdate }: {
   const lastZRef = useRef(0);
   
   const isFlashing = hitFlash?.paddle === "player";
+  const materialRef = useRef<THREE.MeshStandardMaterial>(null);
+  const lightRef = useRef<THREE.PointLight>(null);
+  
   const paddleColor = isFlashing ? "#ffffff" : skinData?.color || "#4fc3f7";
   const emissiveColor = isFlashing ? "#ffffff" : skinData?.emissiveColor || "#4fc3f7";
   
-  useFrame(() => {
+  useFrame(({ clock }) => {
     if (!paddleRef.current) return;
     const { forward, backward } = getKeys();
     const prevZ = paddleRef.current.position.z;
@@ -60,17 +65,35 @@ function PlayerPaddle({ paddleRef, onVelocityUpdate }: {
     const velocityZ = paddleRef.current.position.z - prevZ;
     onVelocityUpdate(velocityZ);
     lastZRef.current = paddleRef.current.position.z;
+    
+    const pulse = Math.sin(clock.elapsedTime * 3) * 0.15 + 0.35;
+    if (materialRef.current && !isFlashing) {
+      materialRef.current.emissiveIntensity = pulse;
+    }
+    if (lightRef.current) {
+      lightRef.current.intensity = pulse * 2;
+    }
   });
   
   return (
-    <mesh ref={paddleRef} position={[-COURT_WIDTH / 2 + 1, 0.5, 0]} castShadow receiveShadow>
-      <boxGeometry args={[PADDLE_WIDTH, PADDLE_HEIGHT, PADDLE_DEPTH]} />
-      <meshStandardMaterial 
-        color={paddleColor} 
-        emissive={emissiveColor} 
-        emissiveIntensity={isFlashing ? 1 : 0.3} 
+    <group>
+      <mesh ref={paddleRef} position={[-COURT_WIDTH / 2 + 1, 0.5, 0]} castShadow receiveShadow>
+        <boxGeometry args={[PADDLE_WIDTH, PADDLE_HEIGHT, PADDLE_DEPTH]} />
+        <meshStandardMaterial 
+          ref={materialRef}
+          color={paddleColor} 
+          emissive={emissiveColor} 
+          emissiveIntensity={isFlashing ? 1 : 0.35} 
+        />
+      </mesh>
+      <pointLight 
+        ref={lightRef}
+        position={[-COURT_WIDTH / 2 + 1.5, 1, 0]} 
+        color={skinData?.emissiveColor || "#4fc3f7"} 
+        intensity={0.7} 
+        distance={4}
       />
-    </mesh>
+    </group>
   );
 }
 
@@ -92,10 +115,19 @@ function AIPaddle({ paddleRef, onVelocityUpdate }: {
   const targetZRef = useRef(0);
   
   const isFlashing = hitFlash?.paddle === "ai";
+  const materialRef = useRef<THREE.MeshStandardMaterial>(null);
+  const lightRef = useRef<THREE.PointLight>(null);
   const paddleColor = isFlashing ? "#ffffff" : skinData?.color || "#ef5350";
   const emissiveColor = isFlashing ? "#ffffff" : skinData?.emissiveColor || "#ef5350";
   
-  useFrame((_, delta) => {
+  useFrame((state, delta) => {
+    const pulse = Math.sin(state.clock.elapsedTime * 3) * 0.15 + 0.35;
+    if (materialRef.current && !isFlashing) {
+      materialRef.current.emissiveIntensity = pulse;
+    }
+    if (lightRef.current) {
+      lightRef.current.intensity = pulse * 2;
+    }
     if (!paddleRef.current) return;
     const prevZ = paddleRef.current.position.z;
     
@@ -142,14 +174,24 @@ function AIPaddle({ paddleRef, onVelocityUpdate }: {
   });
   
   return (
-    <mesh ref={paddleRef} position={[COURT_WIDTH / 2 - 1, 0.5, 0]} castShadow receiveShadow>
-      <boxGeometry args={[PADDLE_WIDTH, PADDLE_HEIGHT, PADDLE_DEPTH]} />
-      <meshStandardMaterial 
-        color={paddleColor} 
-        emissive={emissiveColor} 
-        emissiveIntensity={isFlashing ? 1 : 0.3} 
+    <group>
+      <mesh ref={paddleRef} position={[COURT_WIDTH / 2 - 1, 0.5, 0]} castShadow receiveShadow>
+        <boxGeometry args={[PADDLE_WIDTH, PADDLE_HEIGHT, PADDLE_DEPTH]} />
+        <meshStandardMaterial 
+          ref={materialRef}
+          color={paddleColor} 
+          emissive={emissiveColor} 
+          emissiveIntensity={isFlashing ? 1 : 0.35} 
+        />
+      </mesh>
+      <pointLight 
+        ref={lightRef}
+        position={[COURT_WIDTH / 2 - 1.5, 1, 0]} 
+        color={skinData?.emissiveColor || "#ef5350"} 
+        intensity={0.7} 
+        distance={4}
       />
-    </mesh>
+    </group>
   );
 }
 
@@ -414,8 +456,18 @@ function Ball({ playerPaddleRef, aiPaddleRef, playerPaddleVelocity, aiPaddleVelo
     }
   });
   
+  useFrame(() => {
+    for (let i = TRAIL_LENGTH - 1; i > 0; i--) {
+      trailPositions[i].copy(trailPositions[i - 1]);
+    }
+    if (meshRef.current) {
+      trailPositions[0].copy(meshRef.current.position);
+    }
+  });
+
   return (
-    <mesh ref={meshRef} position={[0, BALL_RADIUS, 0]} castShadow>
+    <group>
+      <mesh ref={meshRef} position={[0, BALL_RADIUS, 0]} castShadow>
         <sphereGeometry args={[BALL_RADIUS, 32, 32]} />
         <meshStandardMaterial 
           color="#ffffff" 
@@ -423,6 +475,41 @@ function Ball({ playerPaddleRef, aiPaddleRef, playerPaddleVelocity, aiPaddleVelo
           emissiveIntensity={0.8} 
         />
       </mesh>
+      <BallTrail />
+    </group>
+  );
+}
+
+function BallTrail() {
+  const trailMeshes = useRef<THREE.Mesh[]>([]);
+  
+  useFrame(() => {
+    trailMeshes.current.forEach((mesh, i) => {
+      if (mesh && trailPositions[i]) {
+        mesh.position.copy(trailPositions[i]);
+      }
+    });
+  });
+  
+  return (
+    <>
+      {trailPositions.map((_, i) => (
+        <mesh 
+          key={i} 
+          ref={(el) => { if (el) trailMeshes.current[i] = el; }}
+          position={[0, BALL_RADIUS, 0]}
+        >
+          <sphereGeometry args={[BALL_RADIUS * (1 - i / TRAIL_LENGTH) * 0.8, 8, 8]} />
+          <meshStandardMaterial 
+            color="#88ccff"
+            emissive="#4488ff"
+            emissiveIntensity={0.5 * (1 - i / TRAIL_LENGTH)}
+            transparent
+            opacity={0.6 * (1 - i / TRAIL_LENGTH)}
+          />
+        </mesh>
+      ))}
+    </>
   );
 }
 

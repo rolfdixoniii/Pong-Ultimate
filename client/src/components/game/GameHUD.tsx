@@ -1,24 +1,43 @@
 import { usePong } from "@/lib/stores/usePong";
 import { useAudio } from "@/lib/stores/useAudio";
-import { useSkins } from "@/lib/stores/useSkins";
-import { useEffect } from "react";
+import { useEffect, useState, useRef } from "react";
+import Confetti from "react-confetti";
 
 import { MainMenu } from "./MainMenu";
 
 export function GameHUD() {
   const { phase, playerScore, aiScore, winner, round, combo, maxCombo, activeEffects, startGame, startNextRound, resetGame, pauseGame, resumeGame, menuState } = usePong();
   const { isMuted, toggleMute } = useAudio();
-  const { unlockedSkins, unlockSkin } = useSkins();
+  const [showFlash, setShowFlash] = useState(false);
+  const [flashColor, setFlashColor] = useState("#ffffff");
+  const prevPlayerScore = useRef(playerScore);
+  const prevAiScore = useRef(aiScore);
+  const [showConfetti, setShowConfetti] = useState(false);
+  
+  useEffect(() => {
+    if (playerScore > prevPlayerScore.current) {
+      setFlashColor("#4fc3f7");
+      setShowFlash(true);
+      setTimeout(() => setShowFlash(false), 300);
+    }
+    prevPlayerScore.current = playerScore;
+  }, [playerScore]);
+  
+  useEffect(() => {
+    if (aiScore > prevAiScore.current) {
+      setFlashColor("#ef5350");
+      setShowFlash(true);
+      setTimeout(() => setShowFlash(false), 300);
+    }
+    prevAiScore.current = aiScore;
+  }, [aiScore]);
   
   useEffect(() => {
     if (winner === "player" && phase === "gameOver") {
-      const SKIN_UNLOCK_ORDER = ["neon", "chrome", "fire", "ice"] as const;
-      const nextSkinIndex = unlockedSkins.length - 1;
-      if (nextSkinIndex < SKIN_UNLOCK_ORDER.length && !unlockedSkins.includes(SKIN_UNLOCK_ORDER[nextSkinIndex])) {
-        unlockSkin(SKIN_UNLOCK_ORDER[nextSkinIndex]);
-      }
+      setShowConfetti(true);
+      setTimeout(() => setShowConfetti(false), 5000);
     }
-  }, [winner, phase, unlockedSkins, unlockSkin]);
+  }, [winner, phase]);
   
   const playerEffects = activeEffects.filter(e => e.target === "player");
   
@@ -51,6 +70,28 @@ export function GameHUD() {
   
   return (
     <div className="absolute inset-0 pointer-events-none">
+      {showFlash && (
+        <div 
+          className="absolute inset-0 pointer-events-none z-50 animate-pulse"
+          style={{ 
+            backgroundColor: flashColor, 
+            opacity: 0.3,
+            animation: "flashFade 0.3s ease-out forwards"
+          }}
+        />
+      )}
+      
+      {showConfetti && (
+        <Confetti
+          width={window.innerWidth}
+          height={window.innerHeight}
+          recycle={false}
+          numberOfPieces={200}
+          gravity={0.3}
+          colors={["#4fc3f7", "#ffeb3b", "#4caf50", "#ff9800", "#e91e63"]}
+        />
+      )}
+      
       {phase === "playing" && (
         <>
           <div className="absolute top-4 md:top-8 left-1/2 -translate-x-1/2 flex flex-col items-center">
