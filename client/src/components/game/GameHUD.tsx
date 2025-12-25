@@ -173,8 +173,13 @@ export function GameHUD() {
       {phase === "playing" && (
         <>
           <div className="absolute top-4 md:top-8 left-1/2 -translate-x-1/2 flex flex-col items-center">
-            <div className="text-xs md:text-sm text-yellow-400 mb-1 md:mb-2 font-semibold">
+            <div className="text-xs md:text-sm text-yellow-400 mb-1 md:mb-2 font-semibold flex items-center gap-3">
               ROUND {round} - {getDifficultyLabel(round)}
+              {combo > 2 && (
+                <span className="text-yellow-300 animate-pulse">
+                  {combo}x RALLY
+                </span>
+              )}
             </div>
             <div className="flex items-center gap-4 md:gap-8">
               <div className="text-center">
@@ -188,15 +193,6 @@ export function GameHUD() {
               </div>
             </div>
           </div>
-          
-          {combo > 2 && (
-            <div className="absolute top-24 md:top-32 left-4 animate-pulse">
-              <div className="text-lg md:text-2xl font-bold text-yellow-400">
-                {combo}x RALLY
-              </div>
-            </div>
-          )}
-          
           <div className="absolute top-4 left-4 flex flex-col gap-1">
             {playerShield && (
               <div className="text-xs md:text-sm font-bold px-2 py-1 bg-black/50 rounded text-cyan-400 animate-pulse">
