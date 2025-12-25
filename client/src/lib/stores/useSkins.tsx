@@ -1,5 +1,5 @@
 import { create } from "zustand";
-import { subscribeWithSelector } from "zustand/middleware";
+import { subscribeWithSelector, persist } from "zustand/middleware";
 
 export type SkinType = "player" | "ai";
 export type PaddleSkinStyle = "default" | "neon" | "chrome" | "fire" | "ice";
@@ -51,12 +51,10 @@ interface SkinsState {
   unlockedMaps: MapStyle[];
   paddleSkins: Record<AllSkinStyles, PaddleSkin>;
   gameMaps: Record<MapStyle, GameMap>;
-  
-  selectPlayerSkin: (skin: AllSkinStyles) => void;
-  selectAISkin: (skin: AllSkinStyles) => void;
-  unlockSkin: (skin: AllSkinStyles, playerLevel: number, playerCoins: number) => { success: boolean; reason: string; cost?: number };
+
+  purchaseSkin: (skin: AllSkinStyles, playerLevel: number, spendCoins: (amount: number) => boolean) => { success: boolean; reason: string };
   selectMap: (map: MapStyle) => void;
-  unlockMap: (map: MapStyle, playerLevel: number, playerCoins: number) => { success: boolean; reason: string; cost?: number };
+  purchaseMap: (map: MapStyle, playerLevel: number, spendCoins: (amount: number) => boolean) => { success: boolean; reason: string };
   canUnlockSkin: (skin: AllSkinStyles, playerLevel: number, playerCoins: number) => { canUnlock: boolean; reason: string };
   canUnlockMap: (map: MapStyle, playerLevel: number, playerCoins: number) => { canUnlock: boolean; reason: string };
   getPlayerPower: () => { powerType: SkinPowerType; hitsRequired: number; duration: number } | null;
@@ -274,122 +272,133 @@ const DEFAULT_MAPS: Record<MapStyle, GameMap> = {
 };
 
 export const useSkins = create<SkinsState>()(
-  subscribeWithSelector((set, get) => ({
-    playerSkin: "default",
-    aiSkin: "default",
-    selectedMap: "neon",
-    unlockedSkins: ["default"],
-    unlockedMaps: ["neon"],
-    paddleSkins: DEFAULT_SKINS,
-    gameMaps: DEFAULT_MAPS,
-    
-    selectPlayerSkin: (skin: AllSkinStyles) => {
-      const { unlockedSkins } = get();
-      if (unlockedSkins.includes(skin)) {
-        set({ playerSkin: skin });
-      }
-    },
-    
-    selectAISkin: (skin: AllSkinStyles) => {
-      const { unlockedSkins } = get();
-      if (unlockedSkins.includes(skin)) {
-        set({ aiSkin: skin });
-      }
-    },
-    
-    unlockSkin: (skin: AllSkinStyles, playerLevel: number, playerCoins: number) => {
-      const { unlockedSkins, paddleSkins } = get();
-      if (unlockedSkins.includes(skin)) {
-        return { success: false, reason: "Already unlocked" };
-      }
-      const skinData = paddleSkins[skin];
-      if (playerLevel < skinData.levelRequired) {
-        return { success: false, reason: `Requires Level ${skinData.levelRequired}` };
-      }
-      if (playerCoins < skinData.coinCost) {
-        return { success: false, reason: `Need ${skinData.coinCost} coins` };
-      }
-      set({ unlockedSkins: [...unlockedSkins, skin] });
-      return { success: true, reason: "", cost: skinData.coinCost };
-    },
-    
-    canUnlockSkin: (skin: AllSkinStyles, playerLevel: number, playerCoins: number) => {
-      const { unlockedSkins, paddleSkins } = get();
-      if (unlockedSkins.includes(skin)) {
-        return { canUnlock: false, reason: "Already unlocked" };
-      }
-      const skinData = paddleSkins[skin];
-      if (playerLevel < skinData.levelRequired) {
-        return { canUnlock: false, reason: `Requires Level ${skinData.levelRequired}` };
-      }
-      if (playerCoins < skinData.coinCost) {
-        return { canUnlock: false, reason: `Need ${skinData.coinCost} coins` };
-      }
-      return { canUnlock: true, reason: "" };
-    },
+  subscribeWithSelector(
+    persist(
+      (set, get) => ({
+        playerSkin: "default",
+        aiSkin: "default",
+        selectedMap: "neon",
+        unlockedSkins: ["default"],
+        unlockedMaps: ["neon"],
+        paddleSkins: DEFAULT_SKINS,
+        gameMaps: DEFAULT_MAPS,
 
-    selectMap: (map: MapStyle) => {
-      const { unlockedMaps } = get();
-      if (unlockedMaps.includes(map)) {
-        set({ selectedMap: map });
-      }
-    },
+        selectPlayerSkin: (skin: AllSkinStyles) => {
+          const { unlockedSkins } = get();
+          if (unlockedSkins.includes(skin)) {
+            set({ playerSkin: skin });
+          }
+        },
 
-    unlockMap: (map: MapStyle, playerLevel: number, playerCoins: number) => {
-      const { unlockedMaps, gameMaps } = get();
-      if (unlockedMaps.includes(map)) {
-        return { success: false, reason: "Already unlocked" };
+        selectAISkin: (skin: AllSkinStyles) => {
+          const { unlockedSkins } = get();
+          if (unlockedSkins.includes(skin)) {
+            set({ aiSkin: skin });
+          }
+        },
+
+        purchaseSkin: (skin: AllSkinStyles, playerLevel: number, spendCoins: (amount: number) => boolean) => {
+          const { unlockedSkins, paddleSkins } = get();
+          if (unlockedSkins.includes(skin)) {
+            return { success: false, reason: "Already unlocked" };
+          }
+          const skinData = paddleSkins[skin];
+          if (playerLevel < skinData.levelRequired) {
+            return { success: false, reason: `Requires Level ${skinData.levelRequired}` };
+          }
+
+          if (spendCoins(skinData.coinCost)) {
+            set({ unlockedSkins: [...unlockedSkins, skin] });
+            return { success: true, reason: "" };
+          }
+
+          return { success: false, reason: `Need ${skinData.coinCost} coins` };
+        },
+
+        canUnlockSkin: (skin: AllSkinStyles, playerLevel: number, playerCoins: number) => {
+          const { unlockedSkins, paddleSkins } = get();
+          if (unlockedSkins.includes(skin)) {
+            return { canUnlock: false, reason: "Already unlocked" };
+          }
+          const skinData = paddleSkins[skin];
+          if (playerLevel < skinData.levelRequired) {
+            return { canUnlock: false, reason: `Requires Level ${skinData.levelRequired}` };
+          }
+          if (playerCoins < skinData.coinCost) {
+            return { canUnlock: false, reason: `Need ${skinData.coinCost} coins` };
+          }
+          return { canUnlock: true, reason: "" };
+        },
+
+        selectMap: (map: MapStyle) => {
+          const { unlockedMaps } = get();
+          if (unlockedMaps.includes(map)) {
+            set({ selectedMap: map });
+          }
+        },
+
+        purchaseMap: (map: MapStyle, playerLevel: number, spendCoins: (amount: number) => boolean) => {
+          const { unlockedMaps, gameMaps } = get();
+          if (unlockedMaps.includes(map)) {
+            return { success: false, reason: "Already unlocked" };
+          }
+          const mapData = gameMaps[map];
+          if (playerLevel < mapData.levelRequired) {
+            return { success: false, reason: `Requires Level ${mapData.levelRequired}` };
+          }
+
+          if (spendCoins(mapData.coinCost)) {
+            set({ unlockedMaps: [...unlockedMaps, map] });
+            return { success: true, reason: "" };
+          }
+
+          return { success: false, reason: `Need ${mapData.coinCost} coins` };
+        },
+
+        canUnlockMap: (map: MapStyle, playerLevel: number, playerCoins: number) => {
+          const { unlockedMaps, gameMaps } = get();
+          if (unlockedMaps.includes(map)) {
+            return { canUnlock: false, reason: "Already unlocked" };
+          }
+          const mapData = gameMaps[map];
+          if (playerLevel < mapData.levelRequired) {
+            return { canUnlock: false, reason: `Requires Level ${mapData.levelRequired}` };
+          }
+          if (playerCoins < mapData.coinCost) {
+            return { canUnlock: false, reason: `Need ${mapData.coinCost} coins` };
+          }
+          return { canUnlock: true, reason: "" };
+        },
+
+        getPlayerPower: () => {
+          const { playerSkin, paddleSkins } = get();
+          const skin = paddleSkins[playerSkin];
+          if (skin.isAwakened && skin.powerType && skin.powerHitsRequired) {
+            return {
+              powerType: skin.powerType,
+              hitsRequired: skin.powerHitsRequired,
+              duration: skin.powerDuration || 0,
+            };
+          }
+          return null;
+        },
+
+        getAIPower: () => {
+          const { aiSkin, paddleSkins } = get();
+          const skin = paddleSkins[aiSkin];
+          if (skin.isAwakened && skin.powerType && skin.powerHitsRequired) {
+            return {
+              powerType: skin.powerType,
+              hitsRequired: skin.powerHitsRequired,
+              duration: skin.powerDuration || 0,
+            };
+          }
+          return null;
+        },
+      }),
+      {
+        name: "pong-skins",
       }
-      const mapData = gameMaps[map];
-      if (playerLevel < mapData.levelRequired) {
-        return { success: false, reason: `Requires Level ${mapData.levelRequired}` };
-      }
-      if (playerCoins < mapData.coinCost) {
-        return { success: false, reason: `Need ${mapData.coinCost} coins` };
-      }
-      set({ unlockedMaps: [...unlockedMaps, map] });
-      return { success: true, reason: "", cost: mapData.coinCost };
-    },
-    
-    canUnlockMap: (map: MapStyle, playerLevel: number, playerCoins: number) => {
-      const { unlockedMaps, gameMaps } = get();
-      if (unlockedMaps.includes(map)) {
-        return { canUnlock: false, reason: "Already unlocked" };
-      }
-      const mapData = gameMaps[map];
-      if (playerLevel < mapData.levelRequired) {
-        return { canUnlock: false, reason: `Requires Level ${mapData.levelRequired}` };
-      }
-      if (playerCoins < mapData.coinCost) {
-        return { canUnlock: false, reason: `Need ${mapData.coinCost} coins` };
-      }
-      return { canUnlock: true, reason: "" };
-    },
-    
-    getPlayerPower: () => {
-      const { playerSkin, paddleSkins } = get();
-      const skin = paddleSkins[playerSkin];
-      if (skin.isAwakened && skin.powerType && skin.powerHitsRequired) {
-        return {
-          powerType: skin.powerType,
-          hitsRequired: skin.powerHitsRequired,
-          duration: skin.powerDuration || 0,
-        };
-      }
-      return null;
-    },
-    
-    getAIPower: () => {
-      const { aiSkin, paddleSkins } = get();
-      const skin = paddleSkins[aiSkin];
-      if (skin.isAwakened && skin.powerType && skin.powerHitsRequired) {
-        return {
-          powerType: skin.powerType,
-          hitsRequired: skin.powerHitsRequired,
-          duration: skin.powerDuration || 0,
-        };
-      }
-      return null;
-    },
-  }))
+    )
+  )
 );
