@@ -1,5 +1,6 @@
 import { usePong } from "@/lib/stores/usePong";
 import { useAudio } from "@/lib/stores/useAudio";
+import { useProgression } from "@/lib/stores/useProgression";
 import { useEffect, useState, useRef } from "react";
 import Confetti from "react-confetti";
 
@@ -8,6 +9,24 @@ import { MainMenu } from "./MainMenu";
 export function GameHUD() {
   const { phase, playerScore, aiScore, winner, round, combo, maxCombo, activeEffects, startGame, startNextRound, resetGame, pauseGame, resumeGame, menuState, playerShield, aiShield, multiballs } = usePong();
   const { isMuted, toggleMute } = useAudio();
+  const { level, pendingRewards, clearPendingRewards, recordRoundWin, recordRoundLoss, recordGameWin, recordGameLoss, getXpProgress } = useProgression();
+  const xpProgress = getXpProgress();
+  const prevPhaseRef = useRef(phase);
+  const prevWinnerRef = useRef(winner);
+  
+  useEffect(() => {
+    if (prevPhaseRef.current === "playing" && phase === "gameOver") {
+      if (winner === "player") {
+        recordRoundWin(round, maxCombo, playerScore);
+        recordGameWin(round);
+      } else {
+        recordRoundLoss();
+        recordGameLoss();
+      }
+    }
+    prevPhaseRef.current = phase;
+    prevWinnerRef.current = winner;
+  }, [phase, winner, round, maxCombo, playerScore, recordRoundWin, recordRoundLoss, recordGameWin, recordGameLoss]);
   const [showFlash, setShowFlash] = useState(false);
   const [flashColor, setFlashColor] = useState("#ffffff");
   const prevPlayerScore = useRef(playerScore);
@@ -205,8 +224,30 @@ export function GameHUD() {
             <div className="text-xl md:text-2xl text-white mb-2">
               Final Score: {playerScore} - {aiScore}
             </div>
+            
+            {pendingRewards && (
+              <div className="bg-gray-800/80 rounded-lg p-4 mb-4 inline-block">
+                <div className="text-lg md:text-xl font-bold text-white mb-2">REWARDS</div>
+                <div className="flex gap-6 justify-center">
+                  <div className="text-center">
+                    <div className="text-cyan-400 text-2xl font-bold">+{pendingRewards.xp}</div>
+                    <div className="text-gray-400 text-sm">XP</div>
+                  </div>
+                  <div className="text-center">
+                    <div className="text-yellow-400 text-2xl font-bold">+{pendingRewards.coins}</div>
+                    <div className="text-gray-400 text-sm">Coins</div>
+                  </div>
+                </div>
+                {pendingRewards.levelUp && (
+                  <div className="mt-3 text-green-400 font-bold animate-pulse">
+                    LEVEL UP! Now Level {pendingRewards.newLevel}
+                  </div>
+                )}
+              </div>
+            )}
+            
             {maxCombo > 1 && (
-              <div className="text-yellow-400 text-sm md:text-base mb-6 md:mb-8">
+              <div className="text-yellow-400 text-sm md:text-base mb-4">
                 Best Combo: {maxCombo}x
               </div>
             )}
@@ -214,7 +255,7 @@ export function GameHUD() {
             {winner === "player" ? (
               <div className="flex flex-col gap-3 md:gap-4 items-center">
                 <button 
-                  onClick={startNextRound}
+                  onClick={() => { clearPendingRewards(); startNextRound(); }}
                   className="px-8 md:px-12 py-3 md:py-4 bg-yellow-600 hover:bg-yellow-500 active:bg-yellow-400 text-white text-xl md:text-2xl font-bold rounded-lg transition-colors"
                 >
                   NEXT ROUND
@@ -223,7 +264,7 @@ export function GameHUD() {
                   Round {round + 1} - {getDifficultyLabel(round + 1)} difficulty awaits!
                 </p>
                 <button 
-                  onClick={resetGame}
+                  onClick={() => { clearPendingRewards(); resetGame(); }}
                   className="px-6 md:px-8 py-2 bg-gray-600 hover:bg-gray-500 active:bg-gray-400 text-white text-base md:text-lg rounded-lg transition-colors"
                 >
                   Back to Menu
@@ -232,7 +273,7 @@ export function GameHUD() {
             ) : (
               <div className="flex flex-col gap-3 md:gap-4 items-center">
                 <button 
-                  onClick={startGame}
+                  onClick={() => { clearPendingRewards(); startGame(); }}
                   className="px-8 md:px-12 py-3 md:py-4 bg-cyan-600 hover:bg-cyan-500 active:bg-cyan-400 text-white text-xl md:text-2xl font-bold rounded-lg transition-colors"
                 >
                   TRY AGAIN
@@ -241,7 +282,7 @@ export function GameHUD() {
                   Restart from Round 1
                 </p>
                 <button 
-                  onClick={resetGame}
+                  onClick={() => { clearPendingRewards(); resetGame(); }}
                   className="px-6 md:px-8 py-2 bg-gray-600 hover:bg-gray-500 active:bg-gray-400 text-white text-base md:text-lg rounded-lg transition-colors"
                 >
                   Back to Menu

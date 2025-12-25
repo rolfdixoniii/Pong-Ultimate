@@ -1,18 +1,36 @@
 import { usePong } from "@/lib/stores/usePong";
 import { useSkins } from "@/lib/stores/useSkins";
 import { useAudio } from "@/lib/stores/useAudio";
+import { useProgression } from "@/lib/stores/useProgression";
 
 export function MainMenu() {
   const { startGame, resetGame } = usePong();
-  const { playerSkin, aiSkin, unlockedSkins, paddleSkins, selectPlayerSkin, selectAISkin, unlockSkin, selectedMap, unlockedMaps, gameMaps, selectMap, unlockMap } = useSkins();
+  const { playerSkin, aiSkin, unlockedSkins, paddleSkins, selectPlayerSkin, selectAISkin, unlockSkin, selectedMap, unlockedMaps, gameMaps, selectMap, unlockMap, canUnlockSkin, canUnlockMap } = useSkins();
   const { isMuted, toggleMute } = useAudio();
   const menuState = usePong(state => state.menuState);
   const setMenuState = usePong(state => state.setMenuState);
-  const coinsCollected = usePong(state => state.coinsCollected);
+  const { level, coins, stats, spendCoins, getXpProgress } = useProgression();
+  const xpProgress = getXpProgress();
   
   if (menuState === "main") {
     return (
       <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-b from-gray-900 to-black pointer-events-auto px-4">
+        <div className="absolute top-4 md:top-8 left-4 md:left-8 bg-gray-800/80 rounded-lg p-3 md:p-4">
+          <div className="flex items-center gap-3 mb-2">
+            <div className="text-yellow-400 font-bold text-lg md:text-xl">LVL {level}</div>
+            <div className="text-yellow-500 font-semibold">💰 {coins}</div>
+          </div>
+          <div className="w-32 md:w-40 h-2 bg-gray-700 rounded-full overflow-hidden">
+            <div 
+              className="h-full bg-gradient-to-r from-cyan-500 to-purple-500 transition-all duration-300"
+              style={{ width: `${xpProgress.percentage}%` }}
+            />
+          </div>
+          <div className="text-xs text-gray-400 mt-1">
+            {xpProgress.current} / {xpProgress.required} XP
+          </div>
+        </div>
+        
         <div className="text-center">
           <h1 className="text-4xl md:text-7xl font-bold text-white mb-2 md:mb-4">3D PONG</h1>
           <p className="text-base md:text-xl text-gray-400 mb-8 md:mb-12">Classic arcade game reimagined</p>
@@ -44,9 +62,15 @@ export function MainMenu() {
             <p className="hidden md:block">Use W/S or Arrow Keys to move your paddle</p>
             <p className="md:hidden">Touch buttons to move your paddle</p>
             <p>First to 5 points wins!</p>
-            <p className="mt-2 text-yellow-500">Win rounds to face harder AI opponents!</p>
-            <p className="mt-1 text-green-400 text-xs md:text-sm">Collect power-ups for special abilities!</p>
+            <p className="mt-2 text-yellow-500">Win rounds to earn XP and coins!</p>
+            <p className="mt-1 text-green-400 text-xs md:text-sm">Level up to unlock new skins and maps!</p>
           </div>
+        </div>
+        
+        <div className="absolute top-4 md:top-8 right-4 md:right-8 bg-gray-800/80 rounded-lg p-3 md:p-4 text-right text-xs md:text-sm">
+          <div className="text-gray-400">Games: {stats.gamesPlayed}</div>
+          <div className="text-green-400">Wins: {stats.gamesWon}</div>
+          <div className="text-cyan-400">Best Combo: {stats.maxCombo}x</div>
         </div>
         
         <button 
@@ -117,23 +141,34 @@ export function MainMenu() {
                   }}
                 />
                 
-                {!isUnlocked && (
-                  <div className="flex flex-col items-center">
-                    <p className="text-yellow-400 text-sm font-semibold mb-2">🔒 LOCKED</p>
-                    <p className="text-yellow-300 text-xs mb-2">Cost: 3 coins</p>
-                    <button
-                      onClick={() => unlockSkin(skin.id, coinsCollected)}
-                      disabled={coinsCollected < 3}
-                      className={`px-3 py-1 text-xs font-bold rounded transition-colors ${
-                        coinsCollected >= 3
-                          ? 'bg-yellow-600 hover:bg-yellow-500 active:bg-yellow-400 text-white'
-                          : 'bg-gray-600 text-gray-400 cursor-not-allowed'
-                      }`}
-                    >
-                      UNLOCK (💰 {coinsCollected}/3)
-                    </button>
-                  </div>
-                )}
+                {!isUnlocked && (() => {
+                  const unlockCheck = canUnlockSkin(skin.id, level, coins);
+                  return (
+                    <div className="flex flex-col items-center">
+                      <p className="text-yellow-400 text-sm font-semibold mb-1">🔒 LOCKED</p>
+                      <p className="text-gray-400 text-xs">Lvl {skin.levelRequired} | 💰 {skin.coinCost}</p>
+                      {!unlockCheck.canUnlock && unlockCheck.reason !== "Already unlocked" && (
+                        <p className="text-red-400 text-xs mb-2">{unlockCheck.reason}</p>
+                      )}
+                      <button
+                        onClick={() => {
+                          const result = unlockSkin(skin.id, level, coins);
+                          if (result.success && result.cost) {
+                            spendCoins(result.cost);
+                          }
+                        }}
+                        disabled={!unlockCheck.canUnlock}
+                        className={`px-3 py-1 text-xs font-bold rounded transition-colors mt-2 ${
+                          unlockCheck.canUnlock
+                            ? 'bg-yellow-600 hover:bg-yellow-500 active:bg-yellow-400 text-white'
+                            : 'bg-gray-600 text-gray-400 cursor-not-allowed'
+                        }`}
+                      >
+                        UNLOCK
+                      </button>
+                    </div>
+                  );
+                })()}
                 
                 {isUnlocked && (
                   <div className="flex gap-2 justify-center">
@@ -219,23 +254,34 @@ export function MainMenu() {
                   />
                 </div>
                 
-                {!isUnlocked && (
-                  <div className="flex flex-col items-center">
-                    <p className="text-yellow-400 text-sm font-semibold mb-2">🔒 LOCKED</p>
-                    <p className="text-yellow-300 text-xs mb-2">Cost: 3 coins</p>
-                    <button
-                      onClick={() => unlockMap(map.id, coinsCollected)}
-                      disabled={coinsCollected < 3}
-                      className={`px-3 py-1 text-xs font-bold rounded transition-colors ${
-                        coinsCollected >= 3
-                          ? 'bg-yellow-600 hover:bg-yellow-500 active:bg-yellow-400 text-white'
-                          : 'bg-gray-600 text-gray-400 cursor-not-allowed'
-                      }`}
-                    >
-                      UNLOCK (💰 {coinsCollected}/3)
-                    </button>
-                  </div>
-                )}
+                {!isUnlocked && (() => {
+                  const unlockCheck = canUnlockMap(map.id, level, coins);
+                  return (
+                    <div className="flex flex-col items-center">
+                      <p className="text-yellow-400 text-sm font-semibold mb-1">🔒 LOCKED</p>
+                      <p className="text-gray-400 text-xs">Lvl {map.levelRequired} | 💰 {map.coinCost}</p>
+                      {!unlockCheck.canUnlock && unlockCheck.reason !== "Already unlocked" && (
+                        <p className="text-red-400 text-xs mb-2">{unlockCheck.reason}</p>
+                      )}
+                      <button
+                        onClick={() => {
+                          const result = unlockMap(map.id, level, coins);
+                          if (result.success && result.cost) {
+                            spendCoins(result.cost);
+                          }
+                        }}
+                        disabled={!unlockCheck.canUnlock}
+                        className={`px-3 py-1 text-xs font-bold rounded transition-colors mt-2 ${
+                          unlockCheck.canUnlock
+                            ? 'bg-yellow-600 hover:bg-yellow-500 active:bg-yellow-400 text-white'
+                            : 'bg-gray-600 text-gray-400 cursor-not-allowed'
+                        }`}
+                      >
+                        UNLOCK
+                      </button>
+                    </div>
+                  );
+                })()}
                 
                 {isUnlocked && (
                   <button

@@ -60,6 +60,12 @@ server/
   - Screen flash on scoring (cyan for player, red for AI)
   - Victory confetti celebration when player wins
 - **Coin System**: Collect coins during gameplay to unlock skins and maps
+- **Progression System**: Earn XP and level up to unlock new content
+  - XP earned for winning rounds (base + round bonus + combo bonus)
+  - Coins earned for round victories
+  - Player level persists across sessions (localStorage)
+  - Level requirements for skins (Lvl 2-8) and maps (Lvl 3-10)
+  - Stats tracking: games played, wins, highest round, max combo
 - **Power-ups**: Various power-ups spawn during rallies (assigned to last ball hitter)
   - Big Paddle (green) - Enlarges your paddle temporarily
   - Slow Ball (orange) - Slows the ball down
@@ -75,6 +81,15 @@ server/
 - Mobile: Use on-screen touch buttons to move paddle
 
 ## Recent Changes
+- December 25, 2025: Added progression and rewards system
+  - Created useProgression store with XP, levels, coins, and stats
+  - Player earns XP and coins for winning rounds
+  - Level requirements for unlocking skins and maps
+  - Post-match rewards display showing XP/coins earned
+  - Level-up celebration on game over screen
+  - Stats displayed in main menu (games, wins, best combo)
+  - XP bar and level badge in main menu
+
 - December 25, 2025: Added shield and multiball power-ups
   - Shield power-up blocks one goal and bounces ball back
   - Multiball spawns 2-3 extra scoring balls

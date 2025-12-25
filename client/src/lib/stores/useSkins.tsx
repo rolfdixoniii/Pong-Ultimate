@@ -12,6 +12,8 @@ export interface PaddleSkin {
   unlocked: boolean;
   color: string;
   emissiveColor: string;
+  coinCost: number;
+  levelRequired: number;
 }
 
 export interface GameMap {
@@ -28,6 +30,8 @@ export interface GameMap {
   lightIntensity: number;
   floorTexture?: string;
   wallTexture?: string;
+  coinCost: number;
+  levelRequired: number;
 }
 
 interface SkinsState {
@@ -41,9 +45,11 @@ interface SkinsState {
   
   selectPlayerSkin: (skin: PaddleSkinStyle) => void;
   selectAISkin: (skin: PaddleSkinStyle) => void;
-  unlockSkin: (skin: PaddleSkinStyle, coins: number) => boolean;
+  unlockSkin: (skin: PaddleSkinStyle, playerLevel: number, playerCoins: number) => { success: boolean; reason: string; cost?: number };
   selectMap: (map: MapStyle) => void;
-  unlockMap: (map: MapStyle, coins: number) => boolean;
+  unlockMap: (map: MapStyle, playerLevel: number, playerCoins: number) => { success: boolean; reason: string; cost?: number };
+  canUnlockSkin: (skin: PaddleSkinStyle, playerLevel: number, playerCoins: number) => { canUnlock: boolean; reason: string };
+  canUnlockMap: (map: MapStyle, playerLevel: number, playerCoins: number) => { canUnlock: boolean; reason: string };
 }
 
 const DEFAULT_SKINS: Record<PaddleSkinStyle, PaddleSkin> = {
@@ -54,6 +60,8 @@ const DEFAULT_SKINS: Record<PaddleSkinStyle, PaddleSkin> = {
     unlocked: true,
     color: "#06b6d4",
     emissiveColor: "#06b6d4",
+    coinCost: 0,
+    levelRequired: 1,
   },
   neon: {
     id: "neon",
@@ -62,6 +70,8 @@ const DEFAULT_SKINS: Record<PaddleSkinStyle, PaddleSkin> = {
     unlocked: false,
     color: "#a855f7",
     emissiveColor: "#d946ef",
+    coinCost: 50,
+    levelRequired: 2,
   },
   chrome: {
     id: "chrome",
@@ -70,6 +80,8 @@ const DEFAULT_SKINS: Record<PaddleSkinStyle, PaddleSkin> = {
     unlocked: false,
     color: "#e5e7eb",
     emissiveColor: "#f3f4f6",
+    coinCost: 100,
+    levelRequired: 4,
   },
   fire: {
     id: "fire",
@@ -78,6 +90,8 @@ const DEFAULT_SKINS: Record<PaddleSkinStyle, PaddleSkin> = {
     unlocked: false,
     color: "#ea580c",
     emissiveColor: "#f97316",
+    coinCost: 150,
+    levelRequired: 6,
   },
   ice: {
     id: "ice",
@@ -86,6 +100,8 @@ const DEFAULT_SKINS: Record<PaddleSkinStyle, PaddleSkin> = {
     unlocked: false,
     color: "#0284c7",
     emissiveColor: "#06b6d4",
+    coinCost: 200,
+    levelRequired: 8,
   },
 };
 
@@ -103,6 +119,8 @@ const DEFAULT_MAPS: Record<MapStyle, GameMap> = {
     lightColor: "#00ffff",
     lightIntensity: 1.0,
     floorTexture: "/textures/asphalt.png",
+    coinCost: 0,
+    levelRequired: 1,
   },
   midnight: {
     id: "midnight",
@@ -116,6 +134,8 @@ const DEFAULT_MAPS: Record<MapStyle, GameMap> = {
     ambientIntensity: 0.7,
     lightColor: "#bf40ff",
     lightIntensity: 0.9,
+    coinCost: 75,
+    levelRequired: 3,
   },
   sunset: {
     id: "sunset",
@@ -130,6 +150,8 @@ const DEFAULT_MAPS: Record<MapStyle, GameMap> = {
     lightColor: "#ff6b20",
     lightIntensity: 1.0,
     floorTexture: "/textures/sand.jpg",
+    coinCost: 125,
+    levelRequired: 5,
   },
   ocean: {
     id: "ocean",
@@ -143,6 +165,8 @@ const DEFAULT_MAPS: Record<MapStyle, GameMap> = {
     ambientIntensity: 0.85,
     lightColor: "#00d9ff",
     lightIntensity: 0.95,
+    coinCost: 175,
+    levelRequired: 7,
   },
   forest: {
     id: "forest",
@@ -158,6 +182,8 @@ const DEFAULT_MAPS: Record<MapStyle, GameMap> = {
     lightIntensity: 0.95,
     floorTexture: "/textures/grass.png",
     wallTexture: "/textures/wood.jpg",
+    coinCost: 250,
+    levelRequired: 10,
   },
 };
 
@@ -185,13 +211,35 @@ export const useSkins = create<SkinsState>()(
       }
     },
     
-    unlockSkin: (skin: PaddleSkinStyle, coins: number) => {
-      const { unlockedSkins } = get();
-      if (!unlockedSkins.includes(skin) && coins >= 3) {
-        set({ unlockedSkins: [...unlockedSkins, skin] });
-        return true;
+    unlockSkin: (skin: PaddleSkinStyle, playerLevel: number, playerCoins: number) => {
+      const { unlockedSkins, paddleSkins } = get();
+      if (unlockedSkins.includes(skin)) {
+        return { success: false, reason: "Already unlocked" };
       }
-      return false;
+      const skinData = paddleSkins[skin];
+      if (playerLevel < skinData.levelRequired) {
+        return { success: false, reason: `Requires Level ${skinData.levelRequired}` };
+      }
+      if (playerCoins < skinData.coinCost) {
+        return { success: false, reason: `Need ${skinData.coinCost} coins` };
+      }
+      set({ unlockedSkins: [...unlockedSkins, skin] });
+      return { success: true, reason: "", cost: skinData.coinCost };
+    },
+    
+    canUnlockSkin: (skin: PaddleSkinStyle, playerLevel: number, playerCoins: number) => {
+      const { unlockedSkins, paddleSkins } = get();
+      if (unlockedSkins.includes(skin)) {
+        return { canUnlock: false, reason: "Already unlocked" };
+      }
+      const skinData = paddleSkins[skin];
+      if (playerLevel < skinData.levelRequired) {
+        return { canUnlock: false, reason: `Requires Level ${skinData.levelRequired}` };
+      }
+      if (playerCoins < skinData.coinCost) {
+        return { canUnlock: false, reason: `Need ${skinData.coinCost} coins` };
+      }
+      return { canUnlock: true, reason: "" };
     },
 
     selectMap: (map: MapStyle) => {
@@ -201,13 +249,35 @@ export const useSkins = create<SkinsState>()(
       }
     },
 
-    unlockMap: (map: MapStyle, coins: number) => {
-      const { unlockedMaps } = get();
-      if (!unlockedMaps.includes(map) && coins >= 3) {
-        set({ unlockedMaps: [...unlockedMaps, map] });
-        return true;
+    unlockMap: (map: MapStyle, playerLevel: number, playerCoins: number) => {
+      const { unlockedMaps, gameMaps } = get();
+      if (unlockedMaps.includes(map)) {
+        return { success: false, reason: "Already unlocked" };
       }
-      return false;
+      const mapData = gameMaps[map];
+      if (playerLevel < mapData.levelRequired) {
+        return { success: false, reason: `Requires Level ${mapData.levelRequired}` };
+      }
+      if (playerCoins < mapData.coinCost) {
+        return { success: false, reason: `Need ${mapData.coinCost} coins` };
+      }
+      set({ unlockedMaps: [...unlockedMaps, map] });
+      return { success: true, reason: "", cost: mapData.coinCost };
+    },
+    
+    canUnlockMap: (map: MapStyle, playerLevel: number, playerCoins: number) => {
+      const { unlockedMaps, gameMaps } = get();
+      if (unlockedMaps.includes(map)) {
+        return { canUnlock: false, reason: "Already unlocked" };
+      }
+      const mapData = gameMaps[map];
+      if (playerLevel < mapData.levelRequired) {
+        return { canUnlock: false, reason: `Requires Level ${mapData.levelRequired}` };
+      }
+      if (playerCoins < mapData.coinCost) {
+        return { canUnlock: false, reason: `Need ${mapData.coinCost} coins` };
+      }
+      return { canUnlock: true, reason: "" };
     },
   }))
 );
