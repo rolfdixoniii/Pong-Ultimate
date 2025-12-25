@@ -17,8 +17,8 @@ const MAGNUS_STRENGTH = 2.0; // Strength of the curve effect
 const SPIN_DECAY = 0.96; // Air resistance on spin
 const TRAIL_LENGTH = 12;
 
+const ballPositionRef = { current: new THREE.Vector3(0, BALL_RADIUS, 0) };
 const ballVelocityRef = { current: new THREE.Vector3(0, 0, 0) };
-// Removed global trailPositions array
 
 function PlayerPaddle({ paddleRef, onVelocityUpdate }: {
   paddleRef: React.RefObject<THREE.Mesh>;
@@ -288,11 +288,13 @@ function Shield({ side }: { side: "player" | "ai" }) {
   );
 }
 
-function Multiball({ id, velocity, playerPaddleRef, aiPaddleRef }: {
+function Multiball({ id, velocity, playerPaddleRef, aiPaddleRef, playerPaddleVelocity, aiPaddleVelocity }: {
   id: string;
   velocity: { x: number; z: number };
   playerPaddleRef: React.RefObject<THREE.Mesh>;
   aiPaddleRef: React.RefObject<THREE.Mesh>;
+  playerPaddleVelocity: number;
+  aiPaddleVelocity: number;
 }) {
   const meshRef = useRef<THREE.Mesh>(null);
   const velocityRef = useRef(new THREE.Vector3(velocity.x, 0, velocity.z));
@@ -320,20 +322,7 @@ function Multiball({ id, velocity, playerPaddleRef, aiPaddleRef }: {
     const frameScale = (delta * 60) / SUB_STEPS;
 
     for (let s = 0; s < SUB_STEPS; s++) {
-      // 1. Move
-      const stepVelocity = velocity.clone().multiplyScalar(frameScale);
-      ball.position.add(stepVelocity);
-
-      // 2. Wall Collisions
-      const maxZ = COURT_DEPTH / 2 - BALL_RADIUS;
-      if (ball.position.z > maxZ || ball.position.z < -maxZ) {
-        velocity.z *= -1;
-        spinRef.current *= 0.5; // Dampen spin on hit
-        ball.position.z = THREE.MathUtils.clamp(ball.position.z, -maxZ, maxZ);
-        playHit();
-      }
-
-      // 3. Magnus Effect (Apply curve based on spin)
+      // 1. Magnus Effect (Apply curve based on spin)
       if (Math.abs(spinRef.current) > 0.01) {
         const rotationAngle = spinRef.current * frameScale * MAGNUS_STRENGTH * 0.01;
         const cos = Math.cos(rotationAngle);
@@ -342,9 +331,19 @@ function Multiball({ id, velocity, playerPaddleRef, aiPaddleRef }: {
         const newZ = velocity.x * sin + velocity.z * cos;
         velocity.x = newX;
         velocity.z = newZ;
-        // Normalization is implicit via rotation, but floating point errors accumulate
-        // However, we don't have the "difficulty.ballMaxSpeed" check here yet.
-        // Let's add it for consistency.
+      }
+
+      // 2. Move
+      const stepVelocity = velocity.clone().multiplyScalar(frameScale);
+      ball.position.add(stepVelocity);
+
+      // 3. Wall Collisions
+      const maxZ = COURT_DEPTH / 2 - BALL_RADIUS;
+      if (ball.position.z > maxZ || ball.position.z < -maxZ) {
+        velocity.z *= -1;
+        spinRef.current *= 0.5; // Dampen spin on hit
+        ball.position.z = THREE.MathUtils.clamp(ball.position.z, -maxZ, maxZ);
+        playHit();
       }
 
       const playerPaddleX = -COURT_WIDTH / 2 + 1;
@@ -365,7 +364,7 @@ function Multiball({ id, velocity, playerPaddleRef, aiPaddleRef }: {
 
           // Speed normalization for multiball
           const currentSpeed = velocity.length();
-          velocity.normalize().multiplyScalar(currentSpeed); // Maintain current speed but clamp angle
+          velocity.normalize().multiplyScalar(currentSpeed);
 
           const maxZRatio = 1.7;
           if (Math.abs(velocity.z) > Math.abs(velocity.x) * maxZRatio) {
@@ -373,7 +372,9 @@ function Multiball({ id, velocity, playerPaddleRef, aiPaddleRef }: {
           }
 
           // Spin 
-          spinRef.current = -hitOffset * 0.4;
+          const frictionSpin = (playerPaddleVelocity / frameScale) * 0.5;
+          const leverageSpin = -hitOffset * 0.3;
+          spinRef.current = frictionSpin + leverageSpin;
 
           playHit();
           break;
@@ -401,7 +402,9 @@ function Multiball({ id, velocity, playerPaddleRef, aiPaddleRef }: {
             velocity.z = Math.sign(velocity.z) * Math.abs(velocity.x) * maxZRatio;
           }
 
-          spinRef.current = -hitOffset * 0.4;
+          const frictionSpin = (aiPaddleVelocity / frameScale) * 0.5;
+          const leverageSpin = -hitOffset * 0.3;
+          spinRef.current = frictionSpin + leverageSpin;
 
           playHit();
           break;
@@ -499,7 +502,8 @@ function Ball({ playerPaddleRef, aiPaddleRef, playerPaddleVelocity, aiPaddleVelo
     spinRef.current = 0;
     rallyCountRef.current = 0;
     resetCombo();
-  }, [difficulty, resetCombo]);
+    trailPositions.forEach(p => p.set(0, BALL_RADIUS, 0));
+  }, [difficulty, resetCombo, trailPositions]);
 
   useEffect(() => {
     scoredRef.current = false;
@@ -766,14 +770,6 @@ function Ball({ playerPaddleRef, aiPaddleRef, playerPaddleVelocity, aiPaddleVelo
     }
   });
 
-  useFrame(() => {
-    for (let i = TRAIL_LENGTH - 1; i > 0; i--) {
-      trailPositions[i].copy(trailPositions[i - 1]);
-    }
-    if (meshRef.current) {
-      trailPositions[0].copy(meshRef.current.position);
-    }
-  });
 
   return (
     <group>
@@ -936,13 +932,15 @@ export function GameScene() {
 
       {predictionLine && <PredictionLine />}
 
-      {multiballs.map(mb => (
+      {multiballs.map((mb: any) => (
         <Multiball
           key={mb.id}
           id={mb.id}
           velocity={mb.velocity}
           playerPaddleRef={playerPaddleRef}
           aiPaddleRef={aiPaddleRef}
+          playerPaddleVelocity={playerPaddleVelocityRef.current}
+          aiPaddleVelocity={aiPaddleVelocityRef.current}
         />
       ))}
 
