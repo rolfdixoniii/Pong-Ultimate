@@ -9,175 +9,212 @@ interface MapBackgroundProps {
 }
 
 // ============================================
-// BEACH TENNIS - Sunny Beach Scene
+// BEACH TENNIS - Beautiful Layered Beach Scene
 // ============================================
 function BeachBackground() {
     const cloudsRef = useRef<THREE.Group>(null);
-    const wavesRef = useRef<THREE.Mesh>(null);
-    const seagullsRef = useRef<THREE.Group>(null);
+    const waveRefs = useRef<THREE.Mesh[]>([]);
 
     const cloudData = useMemo(() => {
-        return Array.from({ length: 8 }, (_, i) => ({
-            x: -40 + i * 12 + (Math.random() - 0.5) * 8,
-            y: 5 + Math.random() * 8,
-            z: -35 - Math.random() * 15,
-            scale: 1.5 + Math.random() * 2,
-            speed: 0.02 + Math.random() * 0.03
-        }));
-    }, []);
-
-    const seagullData = useMemo(() => {
-        return Array.from({ length: 5 }, () => ({
-            x: (Math.random() - 0.5) * 60,
-            y: 8 + Math.random() * 10,
-            z: -30 - Math.random() * 10,
-            speed: 0.5 + Math.random() * 0.5,
-            phase: Math.random() * Math.PI * 2
+        return Array.from({ length: 5 }, (_, i) => ({
+            x: -50 + i * 25,
+            y: 6 + (i % 2) * 3,
+            z: -42 - i * 2,
+            scaleX: 3 + Math.random() * 2,
+            scaleY: 0.8 + Math.random() * 0.4,
+            speed: 0.015 + Math.random() * 0.01
         }));
     }, []);
 
     useFrame(({ clock }) => {
         const time = clock.elapsedTime;
 
-        // Animate clouds drifting
+        // Gentle cloud drift
         if (cloudsRef.current) {
             cloudsRef.current.children.forEach((cloud, i) => {
                 const data = cloudData[i];
                 if (!data) return;
-                cloud.position.x = ((data.x + time * data.speed * 10) % 100) - 50;
+                cloud.position.x = ((data.x + time * data.speed * 8) % 120) - 60;
             });
         }
 
-        // Animate ocean waves
-        if (wavesRef.current) {
-            wavesRef.current.position.y = -8 + Math.sin(time * 1.5) * 0.15;
-        }
-
-        // Animate seagulls
-        if (seagullsRef.current) {
-            seagullsRef.current.children.forEach((bird, i) => {
-                const data = seagullData[i];
-                if (!data) return;
-                bird.position.x = data.x + Math.sin(time * data.speed + data.phase) * 15;
-                bird.position.y = data.y + Math.sin(time * data.speed * 2 + data.phase) * 1;
-            });
-        }
+        // Animate wave layers with offset phases
+        waveRefs.current.forEach((wave, i) => {
+            if (wave) {
+                wave.position.y = -6.5 - i * 0.8 + Math.sin(time * (1.2 - i * 0.2) + i * 0.5) * 0.12;
+            }
+        });
     });
 
     return (
-        <group position={[0, 0, -10]}>
-            {/* Sky gradient - bright blue */}
-            <mesh position={[0, 5, -50]}>
-                <planeGeometry args={[150, 60]} />
-                <meshBasicMaterial color="#4fc3f7" />
+        <group position={[0, 0, -5]}>
+            {/* ===== SKY GRADIENT LAYERS ===== */}
+            {/* Deep sky - top */}
+            <mesh position={[0, 15, -55]}>
+                <planeGeometry args={[180, 25]} />
+                <meshBasicMaterial color="#1e88e5" />
             </mesh>
 
-            {/* Lighter sky near horizon */}
-            <mesh position={[0, -5, -48]}>
-                <planeGeometry args={[150, 30]} />
-                <meshBasicMaterial color="#87ceeb" transparent opacity={0.8} />
+            {/* Mid sky */}
+            <mesh position={[0, 8, -54]}>
+                <planeGeometry args={[180, 20]} />
+                <meshBasicMaterial color="#42a5f5" />
             </mesh>
 
-            {/* Sun with glow */}
-            <mesh position={[25, 12, -45]}>
-                <circleGeometry args={[10, 48]} />
-                <meshBasicMaterial color="#fff59d" transparent opacity={0.4} toneMapped={false} />
-            </mesh>
-            <mesh position={[25, 12, -44]}>
-                <circleGeometry args={[6, 48]} />
-                <meshBasicMaterial color="#ffee58" transparent opacity={0.7} toneMapped={false} />
-            </mesh>
-            <mesh position={[25, 12, -43]}>
-                <circleGeometry args={[4, 48]} />
-                <meshBasicMaterial color="#ffeb3b" toneMapped={false} />
+            {/* Light sky */}
+            <mesh position={[0, 2, -53]}>
+                <planeGeometry args={[180, 15]} />
+                <meshBasicMaterial color="#64b5f6" />
             </mesh>
 
-            {/* Fluffy clouds */}
+            {/* Warm horizon glow */}
+            <mesh position={[0, -3, -52]}>
+                <planeGeometry args={[180, 12]} />
+                <meshBasicMaterial color="#90caf9" />
+            </mesh>
+
+            {/* Golden horizon line */}
+            <mesh position={[0, -7, -51]}>
+                <planeGeometry args={[180, 8]} />
+                <meshBasicMaterial color="#b3e5fc" transparent opacity={0.9} />
+            </mesh>
+
+            {/* ===== SUN WITH SOFT GLOW ===== */}
+            {/* Outer glow - very soft */}
+            <mesh position={[30, 8, -50]}>
+                <circleGeometry args={[18, 64]} />
+                <meshBasicMaterial color="#fff8e1" transparent opacity={0.15} />
+            </mesh>
+            {/* Mid glow */}
+            <mesh position={[30, 8, -49]}>
+                <circleGeometry args={[12, 64]} />
+                <meshBasicMaterial color="#ffecb3" transparent opacity={0.25} />
+            </mesh>
+            {/* Inner glow */}
+            <mesh position={[30, 8, -48]}>
+                <circleGeometry args={[8, 64]} />
+                <meshBasicMaterial color="#ffe082" transparent opacity={0.4} />
+            </mesh>
+            {/* Bright core */}
+            <mesh position={[30, 8, -47]}>
+                <circleGeometry args={[5, 64]} />
+                <meshBasicMaterial color="#ffd54f" transparent opacity={0.7} toneMapped={false} />
+            </mesh>
+            {/* Sun center */}
+            <mesh position={[30, 8, -46]}>
+                <circleGeometry args={[3.5, 64]} />
+                <meshBasicMaterial color="#ffca28" toneMapped={false} />
+            </mesh>
+
+            {/* ===== MINIMAL ELEGANT CLOUDS ===== */}
             <group ref={cloudsRef}>
                 {cloudData.map((cloud, i) => (
-                    <group key={i} position={[cloud.x, cloud.y, cloud.z]} scale={cloud.scale}>
-                        <mesh position={[0, 0, 0]}>
-                            <sphereGeometry args={[1, 12, 12]} />
-                            <meshBasicMaterial color="#ffffff" transparent opacity={0.95} />
-                        </mesh>
-                        <mesh position={[1, -0.2, 0]}>
-                            <sphereGeometry args={[0.8, 12, 12]} />
-                            <meshBasicMaterial color="#ffffff" transparent opacity={0.95} />
-                        </mesh>
-                        <mesh position={[-0.8, -0.1, 0]}>
-                            <sphereGeometry args={[0.7, 12, 12]} />
-                            <meshBasicMaterial color="#ffffff" transparent opacity={0.95} />
-                        </mesh>
-                        <mesh position={[0.5, 0.3, 0]}>
-                            <sphereGeometry args={[0.6, 12, 12]} />
-                            <meshBasicMaterial color="#ffffff" transparent opacity={0.95} />
-                        </mesh>
-                    </group>
+                    <mesh key={i} position={[cloud.x, cloud.y, cloud.z]} scale={[cloud.scaleX, cloud.scaleY, 1]}>
+                        <planeGeometry args={[5, 2]} />
+                        <meshBasicMaterial
+                            color="#ffffff"
+                            transparent
+                            opacity={0.7 - i * 0.08}
+                        />
+                    </mesh>
                 ))}
             </group>
 
-            {/* Ocean */}
-            <mesh ref={wavesRef} position={[0, -8, -35]} rotation={[-Math.PI / 2.5, 0, 0]}>
-                <planeGeometry args={[150, 40]} />
+            {/* ===== OCEAN WITH DEPTH LAYERS ===== */}
+            {/* Deep ocean background */}
+            <mesh position={[0, -10, -45]} rotation={[-Math.PI / 2.8, 0, 0]}>
+                <planeGeometry args={[180, 50]} />
+                <meshBasicMaterial color="#0277bd" />
+            </mesh>
+
+            {/* Mid ocean */}
+            <mesh position={[0, -9, -40]} rotation={[-Math.PI / 2.6, 0, 0]}>
+                <planeGeometry args={[180, 40]} />
                 <meshBasicMaterial color="#0288d1" transparent opacity={0.9} />
             </mesh>
 
-            {/* Ocean foam line */}
-            <mesh position={[0, -7.5, -25]} rotation={[-Math.PI / 2.5, 0, 0]}>
-                <planeGeometry args={[150, 2]} />
-                <meshBasicMaterial color="#e1f5fe" transparent opacity={0.8} />
+            {/* Surface ocean with shimmer */}
+            <mesh position={[0, -8, -35]} rotation={[-Math.PI / 2.5, 0, 0]}>
+                <planeGeometry args={[180, 30]} />
+                <meshBasicMaterial color="#03a9f4" transparent opacity={0.85} />
             </mesh>
 
-            {/* Sandy beach */}
-            <mesh position={[0, -10, -20]} rotation={[-Math.PI / 2.3, 0, 0]}>
-                <planeGeometry args={[150, 30]} />
+            {/* Wave lines - animated */}
+            {[0, 1, 2].map((i) => (
+                <mesh
+                    key={`wave-${i}`}
+                    ref={(el) => { if (el) waveRefs.current[i] = el; }}
+                    position={[0, -6.5 - i * 0.8, -28 + i * 3]}
+                    rotation={[-Math.PI / 2.5, 0, 0]}
+                >
+                    <planeGeometry args={[180, 0.8]} />
+                    <meshBasicMaterial
+                        color={i === 0 ? "#e1f5fe" : i === 1 ? "#b3e5fc" : "#81d4fa"}
+                        transparent
+                        opacity={0.9 - i * 0.15}
+                    />
+                </mesh>
+            ))}
+
+            {/* ===== BEACH WITH GRADIENT ===== */}
+            {/* Wet sand near water */}
+            <mesh position={[0, -9, -22]} rotation={[-Math.PI / 2.4, 0, 0]}>
+                <planeGeometry args={[180, 12]} />
+                <meshBasicMaterial color="#d7ccc8" />
+            </mesh>
+
+            {/* Main sand */}
+            <mesh position={[0, -11, -15]} rotation={[-Math.PI / 2.3, 0, 0]}>
+                <planeGeometry args={[180, 20]} />
                 <meshBasicMaterial color="#ffe0b2" />
             </mesh>
 
-            {/* Palm trees - left side */}
-            <group position={[-35, -5, -28]}>
-                {/* Trunk */}
-                <mesh position={[0, 0, 0]} rotation={[0, 0, 0.15]}>
-                    <cylinderGeometry args={[0.3, 0.5, 8, 8]} />
-                    <meshBasicMaterial color="#8d6e63" />
+            {/* Warm sand - near foreground */}
+            <mesh position={[0, -13, -8]} rotation={[-Math.PI / 2.2, 0, 0]}>
+                <planeGeometry args={[180, 15]} />
+                <meshBasicMaterial color="#ffcc80" />
+            </mesh>
+
+            {/* ===== PALM TREE SILHOUETTES ===== */}
+            {/* Left palm - elegant silhouette */}
+            <group position={[-42, -3, -32]}>
+                <mesh rotation={[0, 0, 0.12]}>
+                    <cylinderGeometry args={[0.2, 0.4, 10, 6]} />
+                    <meshBasicMaterial color="#5d4037" />
                 </mesh>
-                {/* Palm fronds */}
-                {[0, 1, 2, 3, 4, 5].map((j) => (
-                    <mesh key={j} position={[0, 4, 0]} rotation={[0.3, j * 1.05, 0.8]}>
-                        <planeGeometry args={[0.8, 4]} />
-                        <meshBasicMaterial color="#4caf50" side={THREE.DoubleSide} />
+                {[0, 1, 2, 3, 4, 5, 6].map((j) => (
+                    <mesh key={j} position={[0, 5, 0]} rotation={[0.4, j * 0.9, 0.7 + (j % 2) * 0.2]}>
+                        <planeGeometry args={[0.6, 5]} />
+                        <meshBasicMaterial color="#2e7d32" side={THREE.DoubleSide} transparent opacity={0.9} />
                     </mesh>
                 ))}
             </group>
 
-            {/* Palm trees - right side */}
-            <group position={[38, -6, -30]}>
-                <mesh position={[0, 0, 0]} rotation={[0, 0, -0.1]}>
-                    <cylinderGeometry args={[0.25, 0.45, 7, 8]} />
-                    <meshBasicMaterial color="#8d6e63" />
+            {/* Right palm - slightly different */}
+            <group position={[45, -4, -34]}>
+                <mesh rotation={[0, 0, -0.08]}>
+                    <cylinderGeometry args={[0.18, 0.35, 9, 6]} />
+                    <meshBasicMaterial color="#4e342e" />
                 </mesh>
-                {[0, 1, 2, 3, 4, 5].map((j) => (
-                    <mesh key={j} position={[0, 3.5, 0]} rotation={[0.3, j * 1.05, 0.8]}>
-                        <planeGeometry args={[0.7, 3.5]} />
-                        <meshBasicMaterial color="#66bb6a" side={THREE.DoubleSide} />
+                {[0, 1, 2, 3, 4, 5, 6].map((j) => (
+                    <mesh key={j} position={[0, 4.5, 0]} rotation={[0.35, j * 0.9, 0.65 + (j % 2) * 0.25]}>
+                        <planeGeometry args={[0.55, 4.5]} />
+                        <meshBasicMaterial color="#388e3c" side={THREE.DoubleSide} transparent opacity={0.9} />
                     </mesh>
                 ))}
             </group>
 
-            {/* Seagulls */}
-            <group ref={seagullsRef}>
-                {seagullData.map((bird, i) => (
-                    <group key={i} position={[bird.x, bird.y, bird.z]}>
-                        {/* Simple V-shape bird */}
-                        <mesh rotation={[0, 0, 0.3]}>
-                            <planeGeometry args={[0.5, 0.1]} />
-                            <meshBasicMaterial color="#37474f" side={THREE.DoubleSide} />
-                        </mesh>
-                        <mesh rotation={[0, 0, -0.3]}>
-                            <planeGeometry args={[0.5, 0.1]} />
-                            <meshBasicMaterial color="#37474f" side={THREE.DoubleSide} />
-                        </mesh>
-                    </group>
+            {/* Distant palm silhouette for depth */}
+            <group position={[-55, -5, -40]} scale={0.6}>
+                <mesh rotation={[0, 0, 0.05]}>
+                    <cylinderGeometry args={[0.2, 0.4, 10, 6]} />
+                    <meshBasicMaterial color="#37474f" transparent opacity={0.5} />
+                </mesh>
+                {[0, 1, 2, 3, 4, 5].map((j) => (
+                    <mesh key={j} position={[0, 5, 0]} rotation={[0.4, j * 1.05, 0.7]}>
+                        <planeGeometry args={[0.6, 5]} />
+                        <meshBasicMaterial color="#455a64" side={THREE.DoubleSide} transparent opacity={0.4} />
+                    </mesh>
                 ))}
             </group>
         </group>
