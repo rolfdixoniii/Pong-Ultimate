@@ -9,8 +9,12 @@ import { SoundManager } from "./components/game/SoundManager";
 import { TouchControls } from "./components/game/TouchControls";
 
 const controls = [
-  { name: "forward", keys: ["KeyW", "ArrowUp"] },
-  { name: "backward", keys: ["KeyS", "ArrowDown"] },
+  // Player 1 controls (W/S)
+  { name: "p1Forward", keys: ["KeyW"] },
+  { name: "p1Backward", keys: ["KeyS"] },
+  // Player 2 controls (Arrow keys)
+  { name: "p2Forward", keys: ["ArrowUp"] },
+  { name: "p2Backward", keys: ["ArrowDown"] },
 ];
 
 function App() {
