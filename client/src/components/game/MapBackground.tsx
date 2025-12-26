@@ -1,4 +1,4 @@
-import { useRef, useMemo, useEffect } from "react";
+import { useRef, useMemo } from "react";
 import { useFrame } from "@react-three/fiber";
 import * as THREE from "three";
 import { MapStyle, GameMap } from "@/lib/stores/useSkins";
@@ -9,113 +9,181 @@ interface MapBackgroundProps {
 }
 
 // ============================================
-// NEON NIGHT - Enhanced Starfield + Neon Grid
+// BEACH TENNIS - Sunny Beach Scene
 // ============================================
-function StarfieldBackground() {
-    const starsRef = useRef<THREE.InstancedMesh>(null);
-    const gridRef = useRef<THREE.Mesh>(null);
-    const grid2Ref = useRef<THREE.Mesh>(null);
+function BeachBackground() {
+    const cloudsRef = useRef<THREE.Group>(null);
+    const wavesRef = useRef<THREE.Mesh>(null);
+    const seagullsRef = useRef<THREE.Group>(null);
 
-    const starCount = 200;
-    const starData = useMemo(() => {
-        const positions: THREE.Matrix4[] = [];
-        const speeds: number[] = [];
-        const phases: number[] = [];
-        const sizes: number[] = [];
-
-        for (let i = 0; i < starCount; i++) {
-            const matrix = new THREE.Matrix4();
-            const x = (Math.random() - 0.5) * 80;
-            const y = -5 - Math.random() * 30;
-            const z = (Math.random() - 0.5) * 50 - 20;
-            const scale = 0.04 + Math.random() * 0.08;
-
-            matrix.compose(
-                new THREE.Vector3(x, y, z),
-                new THREE.Quaternion(),
-                new THREE.Vector3(scale, scale, scale)
-            );
-            positions.push(matrix);
-            speeds.push(1 + Math.random() * 3);
-            phases.push(Math.random() * Math.PI * 2);
-            sizes.push(scale);
-        }
-        return { positions, speeds, phases, sizes };
+    const cloudData = useMemo(() => {
+        return Array.from({ length: 8 }, (_, i) => ({
+            x: -40 + i * 12 + (Math.random() - 0.5) * 8,
+            y: 5 + Math.random() * 8,
+            z: -35 - Math.random() * 15,
+            scale: 1.5 + Math.random() * 2,
+            speed: 0.02 + Math.random() * 0.03
+        }));
     }, []);
 
-    // Initialize star positions
-    useEffect(() => {
-        if (!starsRef.current) return;
-        for (let i = 0; i < starCount; i++) {
-            starsRef.current.setMatrixAt(i, starData.positions[i]);
-        }
-        starsRef.current.instanceMatrix.needsUpdate = true;
-    }, [starData]);
+    const seagullData = useMemo(() => {
+        return Array.from({ length: 5 }, () => ({
+            x: (Math.random() - 0.5) * 60,
+            y: 8 + Math.random() * 10,
+            z: -30 - Math.random() * 10,
+            speed: 0.5 + Math.random() * 0.5,
+            phase: Math.random() * Math.PI * 2
+        }));
+    }, []);
 
     useFrame(({ clock }) => {
-        if (!starsRef.current) return;
-
         const time = clock.elapsedTime;
-        for (let i = 0; i < starCount; i++) {
-            const twinkle = 0.4 + Math.sin(time * starData.speeds[i] + starData.phases[i]) * 0.6;
-            // Brighter, more vibrant stars with cyan/white color
-            starsRef.current.setColorAt(i, new THREE.Color().setHSL(0.5 + Math.random() * 0.1, 0.3, twinkle));
-        }
-        if (starsRef.current.instanceColor) {
-            starsRef.current.instanceColor.needsUpdate = true;
+
+        // Animate clouds drifting
+        if (cloudsRef.current) {
+            cloudsRef.current.children.forEach((cloud, i) => {
+                const data = cloudData[i];
+                if (!data) return;
+                cloud.position.x = ((data.x + time * data.speed * 10) % 100) - 50;
+            });
         }
 
-        // Animated grid pulsing
-        if (gridRef.current) {
-            const material = gridRef.current.material as THREE.MeshBasicMaterial;
-            material.opacity = 0.12 + Math.sin(time * 0.8) * 0.06;
+        // Animate ocean waves
+        if (wavesRef.current) {
+            wavesRef.current.position.y = -8 + Math.sin(time * 1.5) * 0.15;
         }
-        if (grid2Ref.current) {
-            const material = grid2Ref.current.material as THREE.MeshBasicMaterial;
-            material.opacity = 0.08 + Math.sin(time * 0.6 + 1) * 0.04;
+
+        // Animate seagulls
+        if (seagullsRef.current) {
+            seagullsRef.current.children.forEach((bird, i) => {
+                const data = seagullData[i];
+                if (!data) return;
+                bird.position.x = data.x + Math.sin(time * data.speed + data.phase) * 15;
+                bird.position.y = data.y + Math.sin(time * data.speed * 2 + data.phase) * 1;
+            });
         }
     });
 
     return (
-        <group position={[0, 0, -15]}>
-            {/* Bright stars with glow */}
-            <instancedMesh ref={starsRef} args={[undefined, undefined, starCount]}>
-                <sphereGeometry args={[1, 8, 8]} />
-                <meshBasicMaterial color="#ffffff" toneMapped={false} />
-            </instancedMesh>
-
-            {/* Primary neon grid - cyan */}
-            <mesh ref={gridRef} rotation={[-Math.PI / 2.3, 0, 0]} position={[0, -12, -8]}>
-                <planeGeometry args={[100, 80, 30, 24]} />
-                <meshBasicMaterial
-                    color="#00ffff"
-                    wireframe
-                    transparent
-                    opacity={0.15}
-                    toneMapped={false}
-                />
+        <group position={[0, 0, -10]}>
+            {/* Sky gradient - bright blue */}
+            <mesh position={[0, 5, -50]}>
+                <planeGeometry args={[150, 60]} />
+                <meshBasicMaterial color="#4fc3f7" />
             </mesh>
 
-            {/* Secondary grid - magenta/pink for depth */}
-            <mesh ref={grid2Ref} rotation={[-Math.PI / 2.6, 0, 0]} position={[0, -20, -15]}>
-                <planeGeometry args={[120, 100, 35, 28]} />
-                <meshBasicMaterial
-                    color="#ff00ff"
-                    wireframe
-                    transparent
-                    opacity={0.08}
-                    toneMapped={false}
-                />
+            {/* Lighter sky near horizon */}
+            <mesh position={[0, -5, -48]}>
+                <planeGeometry args={[150, 30]} />
+                <meshBasicMaterial color="#87ceeb" transparent opacity={0.8} />
             </mesh>
 
-            {/* Horizon glow line */}
-            <mesh position={[0, -8, -25]} rotation={[0, 0, 0]}>
+            {/* Sun with glow */}
+            <mesh position={[25, 12, -45]}>
+                <circleGeometry args={[10, 48]} />
+                <meshBasicMaterial color="#fff59d" transparent opacity={0.4} toneMapped={false} />
+            </mesh>
+            <mesh position={[25, 12, -44]}>
+                <circleGeometry args={[6, 48]} />
+                <meshBasicMaterial color="#ffee58" transparent opacity={0.7} toneMapped={false} />
+            </mesh>
+            <mesh position={[25, 12, -43]}>
+                <circleGeometry args={[4, 48]} />
+                <meshBasicMaterial color="#ffeb3b" toneMapped={false} />
+            </mesh>
+
+            {/* Fluffy clouds */}
+            <group ref={cloudsRef}>
+                {cloudData.map((cloud, i) => (
+                    <group key={i} position={[cloud.x, cloud.y, cloud.z]} scale={cloud.scale}>
+                        <mesh position={[0, 0, 0]}>
+                            <sphereGeometry args={[1, 12, 12]} />
+                            <meshBasicMaterial color="#ffffff" transparent opacity={0.95} />
+                        </mesh>
+                        <mesh position={[1, -0.2, 0]}>
+                            <sphereGeometry args={[0.8, 12, 12]} />
+                            <meshBasicMaterial color="#ffffff" transparent opacity={0.95} />
+                        </mesh>
+                        <mesh position={[-0.8, -0.1, 0]}>
+                            <sphereGeometry args={[0.7, 12, 12]} />
+                            <meshBasicMaterial color="#ffffff" transparent opacity={0.95} />
+                        </mesh>
+                        <mesh position={[0.5, 0.3, 0]}>
+                            <sphereGeometry args={[0.6, 12, 12]} />
+                            <meshBasicMaterial color="#ffffff" transparent opacity={0.95} />
+                        </mesh>
+                    </group>
+                ))}
+            </group>
+
+            {/* Ocean */}
+            <mesh ref={wavesRef} position={[0, -8, -35]} rotation={[-Math.PI / 2.5, 0, 0]}>
+                <planeGeometry args={[150, 40]} />
+                <meshBasicMaterial color="#0288d1" transparent opacity={0.9} />
+            </mesh>
+
+            {/* Ocean foam line */}
+            <mesh position={[0, -7.5, -25]} rotation={[-Math.PI / 2.5, 0, 0]}>
                 <planeGeometry args={[150, 2]} />
-                <meshBasicMaterial color="#00ffff" transparent opacity={0.15} toneMapped={false} />
+                <meshBasicMaterial color="#e1f5fe" transparent opacity={0.8} />
             </mesh>
+
+            {/* Sandy beach */}
+            <mesh position={[0, -10, -20]} rotation={[-Math.PI / 2.3, 0, 0]}>
+                <planeGeometry args={[150, 30]} />
+                <meshBasicMaterial color="#ffe0b2" />
+            </mesh>
+
+            {/* Palm trees - left side */}
+            <group position={[-35, -5, -28]}>
+                {/* Trunk */}
+                <mesh position={[0, 0, 0]} rotation={[0, 0, 0.15]}>
+                    <cylinderGeometry args={[0.3, 0.5, 8, 8]} />
+                    <meshBasicMaterial color="#8d6e63" />
+                </mesh>
+                {/* Palm fronds */}
+                {[0, 1, 2, 3, 4, 5].map((j) => (
+                    <mesh key={j} position={[0, 4, 0]} rotation={[0.3, j * 1.05, 0.8]}>
+                        <planeGeometry args={[0.8, 4]} />
+                        <meshBasicMaterial color="#4caf50" side={THREE.DoubleSide} />
+                    </mesh>
+                ))}
+            </group>
+
+            {/* Palm trees - right side */}
+            <group position={[38, -6, -30]}>
+                <mesh position={[0, 0, 0]} rotation={[0, 0, -0.1]}>
+                    <cylinderGeometry args={[0.25, 0.45, 7, 8]} />
+                    <meshBasicMaterial color="#8d6e63" />
+                </mesh>
+                {[0, 1, 2, 3, 4, 5].map((j) => (
+                    <mesh key={j} position={[0, 3.5, 0]} rotation={[0.3, j * 1.05, 0.8]}>
+                        <planeGeometry args={[0.7, 3.5]} />
+                        <meshBasicMaterial color="#66bb6a" side={THREE.DoubleSide} />
+                    </mesh>
+                ))}
+            </group>
+
+            {/* Seagulls */}
+            <group ref={seagullsRef}>
+                {seagullData.map((bird, i) => (
+                    <group key={i} position={[bird.x, bird.y, bird.z]}>
+                        {/* Simple V-shape bird */}
+                        <mesh rotation={[0, 0, 0.3]}>
+                            <planeGeometry args={[0.5, 0.1]} />
+                            <meshBasicMaterial color="#37474f" side={THREE.DoubleSide} />
+                        </mesh>
+                        <mesh rotation={[0, 0, -0.3]}>
+                            <planeGeometry args={[0.5, 0.1]} />
+                            <meshBasicMaterial color="#37474f" side={THREE.DoubleSide} />
+                        </mesh>
+                    </group>
+                ))}
+            </group>
         </group>
     );
 }
+
 
 // ============================================
 // MIDNIGHT - Enhanced Floating Orbs
@@ -539,7 +607,7 @@ function ForestBackground() {
 export function MapBackground({ mapId }: MapBackgroundProps) {
     switch (mapId) {
         case "neon":
-            return <StarfieldBackground />;
+            return <BeachBackground />;
         case "midnight":
             return <OrbFieldBackground />;
         case "sunset":
@@ -549,6 +617,6 @@ export function MapBackground({ mapId }: MapBackgroundProps) {
         case "forest":
             return <ForestBackground />;
         default:
-            return <StarfieldBackground />;
+            return <BeachBackground />;
     }
 }
