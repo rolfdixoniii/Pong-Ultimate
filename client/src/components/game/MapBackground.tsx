@@ -128,37 +128,42 @@ function BeachBackground() {
             </group>
 
             {/* ===== OCEAN WITH DEPTH LAYERS ===== */}
-            {/* Deep ocean background */}
-            <mesh position={[0, -35, -50]} rotation={[-Math.PI / 2.8, 0, 0]}>
-                <planeGeometry args={[300, 80]} />
+            {/* Deep ocean - horizon */}
+            <mesh position={[0, -5, -52]}>
+                <planeGeometry args={[300, 15]} />
                 <meshBasicMaterial color="#0277bd" />
             </mesh>
 
             {/* Mid ocean */}
-            <mesh position={[0, -28, -45]} rotation={[-Math.PI / 2.6, 0, 0]}>
-                <planeGeometry args={[300, 60]} />
+            <mesh position={[0, -8, -48]}>
+                <planeGeometry args={[300, 12]} />
                 <meshBasicMaterial color="#0288d1" />
             </mesh>
 
-            {/* Surface ocean with shimmer */}
-            <mesh position={[0, -20, -38]} rotation={[-Math.PI / 2.5, 0, 0]}>
-                <planeGeometry args={[300, 50]} />
+            {/* Surface ocean - bright blue */}
+            <mesh position={[0, -10, -42]}>
+                <planeGeometry args={[300, 15]} />
                 <meshBasicMaterial color="#03a9f4" />
             </mesh>
 
-            {/* Wave lines - animated */}
+            {/* Shallow water near shore */}
+            <mesh position={[0, -12, -35]}>
+                <planeGeometry args={[300, 12]} />
+                <meshBasicMaterial color="#29b6f6" />
+            </mesh>
+
+            {/* Animated wave foam lines */}
             {[0, 1, 2].map((i) => (
                 <mesh
                     key={`wave-${i}`}
                     ref={(el) => { if (el) waveRefs.current[i] = el; }}
-                    position={[0, -6.5 - i * 0.8, -28 + i * 3]}
-                    rotation={[-Math.PI / 2.5, 0, 0]}
+                    position={[0, -13 - i * 0.4, -28 + i * 2]}
                 >
-                    <planeGeometry args={[300, 1]} />
+                    <planeGeometry args={[300, 1.2 - i * 0.2]} />
                     <meshBasicMaterial
-                        color={i === 0 ? "#e1f5fe" : i === 1 ? "#b3e5fc" : "#81d4fa"}
+                        color={i === 0 ? "#ffffff" : i === 1 ? "#e1f5fe" : "#b3e5fc"}
                         transparent
-                        opacity={0.9 - i * 0.15}
+                        opacity={0.95 - i * 0.15}
                     />
                 </mesh>
             ))}
