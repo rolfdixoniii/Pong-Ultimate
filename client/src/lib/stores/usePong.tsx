@@ -4,6 +4,7 @@ import type { SkinPowerType } from "./useSkins";
 
 export type GamePhase = "menu" | "playing" | "paused" | "gameOver";
 export type MenuState = "main" | "skins" | "settings" | "maps" | "achievements";
+export type GameMode = "singlePlayer" | "twoPlayer";
 
 export type PowerUpType = "bigPaddle" | "slowBall" | "multiball" | "speedBoost" | "shield";
 
@@ -77,6 +78,7 @@ function getDifficultyForRound(round: number, aiDifficulty: "easy" | "normal" | 
 interface PongState {
   phase: GamePhase;
   menuState: MenuState;
+  gameMode: GameMode;
   playerScore: number;
   aiScore: number;
   winningScore: number;
@@ -114,7 +116,7 @@ interface PongState {
   addMultiball: () => void;
   removeMultiball: (id: string) => void;
   clearMultiballs: () => void;
-  startGame: (aiDifficulty: "easy" | "normal" | "hard") => void;
+  startGame: (aiDifficulty: "easy" | "normal" | "hard", gameMode?: GameMode) => void;
   startNextRound: (aiDifficulty: "easy" | "normal" | "hard") => void;
   pauseGame: () => void;
   resumeGame: () => void;
@@ -154,6 +156,7 @@ export const usePong = create<PongState>()(
   subscribeWithSelector((set: any, get: any) => ({
     phase: "menu",
     menuState: "main",
+    gameMode: "singlePlayer" as GameMode,
     playerScore: 0,
     aiScore: 0,
     winningScore: 5,
@@ -230,10 +233,11 @@ export const usePong = create<PongState>()(
       set({ multiballs: [] });
     },
 
-    startGame: () => {
-      const difficulty = getDifficultyForRound(1);
+    startGame: (aiDifficulty: "easy" | "normal" | "hard" = "normal", gameMode: GameMode = "singlePlayer") => {
+      const difficulty = getDifficultyForRound(1, aiDifficulty);
       set({
         phase: "playing",
+        gameMode,
         playerScore: 0,
         aiScore: 0,
         winner: null,
@@ -305,6 +309,7 @@ export const usePong = create<PongState>()(
       set({
         phase: "menu",
         menuState: "main",
+        gameMode: "singlePlayer" as GameMode,
         playerScore: 0,
         aiScore: 0,
         winner: null,

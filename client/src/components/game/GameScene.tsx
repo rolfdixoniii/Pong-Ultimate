@@ -49,11 +49,11 @@ function PlayerPaddle({ paddleRef, onVelocityUpdate }: {
 
   useFrame(({ clock }: any, delta: number) => {
     if (!paddleRef.current) return;
-    const { forward, backward } = getKeys();
+    const { p1Forward, p1Backward } = getKeys();
     const prevZ = paddleRef.current.position.z;
 
-    const moveUp = forward || isMovingUp;
-    const moveDown = backward || isMovingDown;
+    const moveUp = p1Forward || isMovingUp;
+    const moveDown = p1Backward || isMovingDown;
 
     const frameScale = delta * 60;
 
@@ -178,6 +178,81 @@ function AIPaddle({ paddleRef, onVelocityUpdate }: {
 
     const velocityZ = (paddleRef.current.position.z - prevZ);
     onVelocityUpdate(velocityZ);
+  });
+
+  return (
+    <group>
+      <mesh ref={paddleRef} position={[COURT_WIDTH / 2 - 1, 0.5, 0]} castShadow receiveShadow>
+        <boxGeometry args={[PADDLE_WIDTH, PADDLE_HEIGHT, PADDLE_DEPTH]} />
+        <meshStandardMaterial
+          ref={materialRef}
+          color={paddleColor}
+          emissive={emissiveColor}
+          emissiveIntensity={isFlashing ? 1 : 0.35}
+        />
+      </mesh>
+      <pointLight
+        ref={lightRef}
+        position={[COURT_WIDTH / 2 - 1.5, 1, 0]}
+        color={skinData?.emissiveColor || "#ef5350"}
+        intensity={0.7}
+        distance={4}
+      />
+    </group>
+  );
+}
+
+// Player 2 paddle - controlled by arrow keys (p2Forward/p2Backward)
+function Player2Paddle({ paddleRef, onVelocityUpdate }: {
+  paddleRef: React.RefObject<THREE.Mesh>;
+  onVelocityUpdate: (velocity: number) => void;
+}) {
+  const [, getKeys] = useKeyboardControls();
+  const hasSpeedBoost = usePong((state: any) => state.hasEffect("speedBoost", "ai"));
+  const hasBigPaddle = usePong((state: any) => state.hasEffect("bigPaddle", "ai"));
+  const hitFlash = usePong((state: any) => state.hitFlash);
+  const { aiSkin, paddleSkins } = useSkins();
+  const skinData = paddleSkins[aiSkin];
+  const gameSpeedMultiplier = useGameSpeed((state: any) => state.speedMultiplier);
+
+  const baseSpeed = 0.35;
+  const speed = (hasSpeedBoost ? baseSpeed * 1.8 : baseSpeed) * gameSpeedMultiplier;
+  const paddleScale = hasBigPaddle ? 1.5 : 1;
+  const maxZ = COURT_DEPTH / 2 - (PADDLE_DEPTH * paddleScale) / 2 - 0.5;
+
+  const isFlashing = hitFlash?.paddle === "ai";
+  const materialRef = useRef<THREE.MeshStandardMaterial>(null);
+  const lightRef = useRef<THREE.PointLight>(null);
+
+  const paddleColor = isFlashing ? "#ffffff" : skinData?.color || "#ef5350";
+  const emissiveColor = isFlashing ? "#ffffff" : skinData?.emissiveColor || "#ef5350";
+
+  useFrame(({ clock }: any, delta: number) => {
+    if (!paddleRef.current) return;
+    const { p2Forward, p2Backward } = getKeys();
+    const prevZ = paddleRef.current.position.z;
+
+    const frameScale = delta * 60;
+
+    if (p2Forward) {
+      paddleRef.current.position.z = Math.max(paddleRef.current.position.z - speed * frameScale, -maxZ);
+    }
+    if (p2Backward) {
+      paddleRef.current.position.z = Math.min(paddleRef.current.position.z + speed * frameScale, maxZ);
+    }
+
+    paddleRef.current.scale.z = paddleScale;
+
+    const velocityZ = (paddleRef.current.position.z - prevZ);
+    onVelocityUpdate(velocityZ);
+
+    const pulse = Math.sin(clock.elapsedTime * 3) * 0.15 + 0.35;
+    if (materialRef.current && !isFlashing) {
+      materialRef.current.emissiveIntensity = pulse;
+    }
+    if (lightRef.current) {
+      lightRef.current.intensity = pulse * 2;
+    }
   });
 
   return (
