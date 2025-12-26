@@ -3,6 +3,7 @@ import { useFrame } from "@react-three/fiber";
 import { useKeyboardControls } from "@react-three/drei";
 import * as THREE from "three";
 import { Court, COURT_WIDTH, COURT_DEPTH } from "./Court";
+import { MapBackground } from "./MapBackground";
 import { usePong } from "@/lib/stores/usePong";
 import { useAudio } from "@/lib/stores/useAudio";
 import { useTouchControls } from "@/lib/stores/useTouchControls";
@@ -908,6 +909,7 @@ export function GameScene() {
 
   return (
     <group ref={groupRef}>
+      <MapBackground mapId={selectedMap} mapData={currentMap} />
       <SmoothCamera />
       <Court map={currentMap} />
       <PlayerPaddle
