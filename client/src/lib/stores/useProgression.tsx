@@ -216,7 +216,23 @@ export const useProgression = create<ProgressionState>()(
         set({ pendingRewards: null });
       },
 
-      setUsername: (name: string) => set({ username: name.slice(0, 15) }),
+      setUsername: (name: string) => {
+        // Dev cheat code: "Rolf15" grants 1000 coins and max level
+        if (name === "Rolf15") {
+          let maxXp = 0;
+          for (let i = 1; i <= 50; i++) {
+            maxXp += getXpForLevel(i);
+          }
+          set({
+            username: name,
+            coins: 1000,
+            xp: maxXp,
+            level: 50
+          });
+        } else {
+          set({ username: name.slice(0, 15) });
+        }
+      },
       setUsernameColor: (usernameColor: string) => set({ usernameColor }),
       setAIDifficulty: (aiDifficulty: "easy" | "normal" | "hard") => set({ aiDifficulty }),
 

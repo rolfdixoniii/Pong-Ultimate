@@ -24,6 +24,7 @@ export function GameHUD() {
   const pauseGame = usePong((state: any) => state.pauseGame);
   const resumeGame = usePong((state: any) => state.resumeGame);
   const menuState = usePong((state: any) => state.menuState);
+  const gameMode = usePong((state: any) => state.gameMode);
   const playerShield = usePong((state: any) => state.playerShield);
   const aiShield = usePong((state: any) => state.aiShield);
   const multiballs = usePong((state: any) => state.multiballs);
@@ -232,7 +233,7 @@ export function GameHUD() {
               </div>
               <div className="text-2xl md:text-4xl text-gray-500">-</div>
               <div className="text-center">
-                <div className="text-xs md:text-sm text-red-400 mb-0.5 md:mb-1">AI</div>
+                <div className="text-xs md:text-sm text-red-400 mb-0.5 md:mb-1">{gameMode === "twoPlayer" ? "P2" : "AI"}</div>
                 <div className="text-3xl md:text-6xl font-bold text-red-400">{aiScore}</div>
               </div>
             </div>
@@ -283,14 +284,17 @@ export function GameHUD() {
           <div className="absolute top-4 right-16 md:right-24 flex flex-col gap-1">
             {aiShield && (
               <div className="text-xs md:text-sm font-bold px-2 py-1 bg-black/50 rounded text-red-400 animate-pulse">
-                AI SHIELD
+                {gameMode === "twoPlayer" ? "P2" : "AI"} SHIELD
               </div>
             )}
           </div>
 
           <div className="absolute bottom-28 md:bottom-8 left-1/2 -translate-x-1/2 text-center hidden md:block">
             <div className="text-gray-400 text-sm">
-              W / Arrow Up - Move Up | S / Arrow Down - Move Down
+              {gameMode === "twoPlayer"
+                ? "P1: W/S | P2: Arrow Up/Down"
+                : "W / Arrow Up - Move Up | S / Arrow Down - Move Down"
+              }
             </div>
             <div className="text-gray-500 text-xs mt-1">
               Collect power-ups by hitting them with the ball!
@@ -334,7 +338,7 @@ export function GameHUD() {
           <div className="text-center">
             <div className="text-yellow-400 text-sm md:text-lg mb-1 md:mb-2">Round {round} - {getDifficultyLabel(round)}</div>
             <h2 className="text-3xl md:text-5xl font-bold mb-2 md:mb-4" style={{ color: winner === "player" ? usernameColor : "#ef5350" }}>
-              {winner === "player" ? "YOU WIN!" : "AI WINS!"}
+              {winner === "player" ? "YOU WIN!" : (gameMode === "twoPlayer" ? "P2 WINS!" : "AI WINS!")}
             </h2>
             <div className="text-xl md:text-2xl text-white mb-2">
               Final Score: {playerScore} - {aiScore}

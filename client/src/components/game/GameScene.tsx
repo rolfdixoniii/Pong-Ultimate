@@ -952,6 +952,7 @@ export function GameScene() {
   const playerPaddleVelocityRef = useRef(0);
   const aiPaddleVelocityRef = useRef(0);
   const phase = usePong((state: any) => state.phase);
+  const gameMode = usePong((state: any) => state.gameMode);
   const powerUps = usePong((state: any) => state.powerUps);
   const coins = usePong((state: any) => state.coins);
   const screenShake = usePong((state: any) => state.screenShake);
@@ -991,10 +992,17 @@ export function GameScene() {
         paddleRef={playerPaddleRef}
         onVelocityUpdate={handlePlayerVelocityUpdate}
       />
-      <AIPaddle
-        paddleRef={aiPaddleRef}
-        onVelocityUpdate={handleAiVelocityUpdate}
-      />
+      {gameMode === "twoPlayer" ? (
+        <Player2Paddle
+          paddleRef={aiPaddleRef}
+          onVelocityUpdate={handleAiVelocityUpdate}
+        />
+      ) : (
+        <AIPaddle
+          paddleRef={aiPaddleRef}
+          onVelocityUpdate={handleAiVelocityUpdate}
+        />
+      )}
 
       {powerUps.map(powerUp => (
         <PowerUpOrb key={powerUp.id} powerUp={powerUp} />
