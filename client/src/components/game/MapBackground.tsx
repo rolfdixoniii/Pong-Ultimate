@@ -48,36 +48,43 @@ function BeachBackground() {
 
     return (
         <group position={[0, 0, -5]}>
+            {/* ===== FULL COVERAGE BASE - eliminates any gaps ===== */}
+            <mesh position={[0, 0, -60]}>
+                <planeGeometry args={[300, 200]} />
+                <meshBasicMaterial color="#1565c0" />
+            </mesh>
+
             {/* ===== SKY GRADIENT LAYERS ===== */}
             {/* Deep sky - top */}
-            <mesh position={[0, 15, -55]}>
-                <planeGeometry args={[180, 25]} />
+            <mesh position={[0, 25, -58]}>
+                <planeGeometry args={[300, 60]} />
                 <meshBasicMaterial color="#1e88e5" />
             </mesh>
 
             {/* Mid sky */}
-            <mesh position={[0, 8, -54]}>
-                <planeGeometry args={[180, 20]} />
+            <mesh position={[0, 5, -57]}>
+                <planeGeometry args={[300, 40]} />
                 <meshBasicMaterial color="#42a5f5" />
             </mesh>
 
             {/* Light sky */}
-            <mesh position={[0, 2, -53]}>
-                <planeGeometry args={[180, 15]} />
+            <mesh position={[0, -8, -56]}>
+                <planeGeometry args={[300, 30]} />
                 <meshBasicMaterial color="#64b5f6" />
             </mesh>
 
             {/* Warm horizon glow */}
-            <mesh position={[0, -3, -52]}>
-                <planeGeometry args={[180, 12]} />
+            <mesh position={[0, -18, -55]}>
+                <planeGeometry args={[300, 25]} />
                 <meshBasicMaterial color="#90caf9" />
             </mesh>
 
             {/* Golden horizon line */}
-            <mesh position={[0, -7, -51]}>
-                <planeGeometry args={[180, 8]} />
-                <meshBasicMaterial color="#b3e5fc" transparent opacity={0.9} />
+            <mesh position={[0, -28, -54]}>
+                <planeGeometry args={[300, 20]} />
+                <meshBasicMaterial color="#b3e5fc" />
             </mesh>
+
 
             {/* ===== SUN WITH SOFT GLOW ===== */}
             {/* Outer glow - very soft */}
@@ -122,21 +129,21 @@ function BeachBackground() {
 
             {/* ===== OCEAN WITH DEPTH LAYERS ===== */}
             {/* Deep ocean background */}
-            <mesh position={[0, -10, -45]} rotation={[-Math.PI / 2.8, 0, 0]}>
-                <planeGeometry args={[180, 50]} />
+            <mesh position={[0, -35, -50]} rotation={[-Math.PI / 2.8, 0, 0]}>
+                <planeGeometry args={[300, 80]} />
                 <meshBasicMaterial color="#0277bd" />
             </mesh>
 
             {/* Mid ocean */}
-            <mesh position={[0, -9, -40]} rotation={[-Math.PI / 2.6, 0, 0]}>
-                <planeGeometry args={[180, 40]} />
-                <meshBasicMaterial color="#0288d1" transparent opacity={0.9} />
+            <mesh position={[0, -28, -45]} rotation={[-Math.PI / 2.6, 0, 0]}>
+                <planeGeometry args={[300, 60]} />
+                <meshBasicMaterial color="#0288d1" />
             </mesh>
 
             {/* Surface ocean with shimmer */}
-            <mesh position={[0, -8, -35]} rotation={[-Math.PI / 2.5, 0, 0]}>
-                <planeGeometry args={[180, 30]} />
-                <meshBasicMaterial color="#03a9f4" transparent opacity={0.85} />
+            <mesh position={[0, -20, -38]} rotation={[-Math.PI / 2.5, 0, 0]}>
+                <planeGeometry args={[300, 50]} />
+                <meshBasicMaterial color="#03a9f4" />
             </mesh>
 
             {/* Wave lines - animated */}
@@ -147,7 +154,7 @@ function BeachBackground() {
                     position={[0, -6.5 - i * 0.8, -28 + i * 3]}
                     rotation={[-Math.PI / 2.5, 0, 0]}
                 >
-                    <planeGeometry args={[180, 0.8]} />
+                    <planeGeometry args={[300, 1]} />
                     <meshBasicMaterial
                         color={i === 0 ? "#e1f5fe" : i === 1 ? "#b3e5fc" : "#81d4fa"}
                         transparent
@@ -158,20 +165,20 @@ function BeachBackground() {
 
             {/* ===== BEACH WITH GRADIENT ===== */}
             {/* Wet sand near water */}
-            <mesh position={[0, -9, -22]} rotation={[-Math.PI / 2.4, 0, 0]}>
-                <planeGeometry args={[180, 12]} />
+            <mesh position={[0, -12, -25]} rotation={[-Math.PI / 2.4, 0, 0]}>
+                <planeGeometry args={[300, 25]} />
                 <meshBasicMaterial color="#d7ccc8" />
             </mesh>
 
             {/* Main sand */}
-            <mesh position={[0, -11, -15]} rotation={[-Math.PI / 2.3, 0, 0]}>
-                <planeGeometry args={[180, 20]} />
+            <mesh position={[0, -15, -18]} rotation={[-Math.PI / 2.3, 0, 0]}>
+                <planeGeometry args={[300, 35]} />
                 <meshBasicMaterial color="#ffe0b2" />
             </mesh>
 
             {/* Warm sand - near foreground */}
-            <mesh position={[0, -13, -8]} rotation={[-Math.PI / 2.2, 0, 0]}>
-                <planeGeometry args={[180, 15]} />
+            <mesh position={[0, -18, -10]} rotation={[-Math.PI / 2.2, 0, 0]}>
+                <planeGeometry args={[300, 30]} />
                 <meshBasicMaterial color="#ffcc80" />
             </mesh>
 
