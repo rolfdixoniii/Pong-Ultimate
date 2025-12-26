@@ -21,6 +21,17 @@ function App() {
     setShowCanvas(true);
   }, []);
 
+  // Prevent arrow keys from scrolling the page during gameplay
+  useEffect(() => {
+    const preventScroll = (e: KeyboardEvent) => {
+      if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', ' '].includes(e.key)) {
+        e.preventDefault();
+      }
+    };
+    window.addEventListener('keydown', preventScroll, { passive: false });
+    return () => window.removeEventListener('keydown', preventScroll);
+  }, []);
+
   return (
     <div style={{ width: '100vw', minHeight: '100vh', position: 'relative', overflow: 'auto' }}>
       {showCanvas && (
@@ -46,23 +57,23 @@ function App() {
                 onIncline={() => setDpr(Math.min(dpr + 0.25, 2))}
                 onDecline={() => setDpr(Math.max(dpr - 0.25, 1))}
               />
-              
+
               <color attach="background" args={["#0a0a0f"]} />
-              
+
               <ambientLight intensity={0.5} />
-              <directionalLight 
-                position={[10, 20, 5]} 
+              <directionalLight
+                position={[10, 20, 5]}
                 intensity={1.3}
               />
               <pointLight position={[-10, 10, -10]} intensity={0.6} color="#4fc3f7" />
               <pointLight position={[10, 10, -10]} intensity={0.6} color="#ef5350" />
-              
+
               <fog attach="fog" args={["#0a0a0f", 30, 60]} />
-              
+
               <Suspense fallback={null}>
                 <GameScene />
                 <EffectComposer>
-                  <Bloom 
+                  <Bloom
                     intensity={0.4}
                     luminanceThreshold={0.6}
                     luminanceSmoothing={0.9}
@@ -72,7 +83,7 @@ function App() {
                 </EffectComposer>
               </Suspense>
             </Canvas>
-            
+
             <GameHUD />
             <TouchControls />
             <SoundManager />
