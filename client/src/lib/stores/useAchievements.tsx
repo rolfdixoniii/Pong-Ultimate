@@ -351,6 +351,7 @@ interface AchievementProgress {
   progress: number;
   unlocked: boolean;
   unlockedAt?: number;
+  rewardsClaimed?: boolean;
 }
 
 interface PendingAchievement {
@@ -374,6 +375,8 @@ interface AchievementsState {
   incrementStreak: () => void;
   resetStreak: () => void;
   getAchievementsByCategory: (category: Achievement["category"]) => Achievement[];
+  claimReward: (id: AchievementId) => boolean;
+  getUnclaimedCount: () => number;
 }
 
 const initializeProgress = (): Record<AchievementId, AchievementProgress> => {
@@ -508,6 +511,31 @@ export const useAchievements = create<AchievementsState>()(
 
       getAchievementsByCategory: (category: Achievement["category"]) => {
         return Object.values(ACHIEVEMENTS).filter(a => a.category === category);
+      },
+
+      claimReward: (id: AchievementId) => {
+        const { progress } = get();
+        const current = progress[id];
+
+        if (!current || !current.unlocked || current.rewardsClaimed) {
+          return false;
+        }
+
+        set({
+          progress: {
+            ...progress,
+            [id]: {
+              ...current,
+              rewardsClaimed: true,
+            },
+          },
+        });
+        return true;
+      },
+
+      getUnclaimedCount: () => {
+        const { progress } = get();
+        return Object.values(progress).filter((p: any) => p.unlocked && !p.rewardsClaimed).length;
       },
     }),
     {

@@ -6,8 +6,8 @@ interface AchievementsMenuProps {
 }
 
 export function AchievementsMenu({ onBack }: AchievementsMenuProps) {
-  const { progress, getUnlockedCount, getTotalCount, getCompletionPercentage } = useAchievements();
-  const { username, usernameColor } = useProgression();
+  const { progress, getUnlockedCount, getTotalCount, getCompletionPercentage, claimReward, getUnclaimedCount } = useAchievements();
+  const { username, usernameColor, addXp, addCoins } = useProgression();
 
   const categories: { id: Achievement["category"]; label: string; color: string }[] = [
     { id: "gameplay", label: "Gameplay", color: "cyan" },
@@ -21,6 +21,14 @@ export function AchievementsMenu({ onBack }: AchievementsMenuProps) {
   };
 
   const completionPercent = getCompletionPercentage();
+  const unclaimedCount = getUnclaimedCount();
+
+  const handleClaimReward = (achievement: Achievement, id: AchievementId) => {
+    if (claimReward(id)) {
+      addXp(achievement.xpReward);
+      addCoins(achievement.coinReward);
+    }
+  };
 
   return (
     <div className="flex flex-col items-center w-full max-w-4xl mx-auto">
@@ -35,17 +43,24 @@ export function AchievementsMenu({ onBack }: AchievementsMenuProps) {
         <span style={{ color: usernameColor }}>{username || "PLAYER"}</span>'S ACHIEVEMENTS
       </h2>
 
-      <div className="flex items-center gap-4 mb-6">
-        <div className="text-gray-400">
-          {getUnlockedCount()} / {getTotalCount()} Unlocked
+      <div className="w-full mb-6 space-y-3">
+        <div className="flex items-center gap-4">
+          <div className="text-gray-400">
+            {getUnlockedCount()} / {getTotalCount()} Unlocked
+          </div>
+          <div className="w-32 h-3 bg-gray-700 rounded-full overflow-hidden">
+            <div
+              className="h-full bg-gradient-to-r from-cyan-500 to-purple-500 transition-all duration-500"
+              style={{ width: `${completionPercent}%` }}
+            />
+          </div>
+          <div className="text-cyan-400 font-bold">{completionPercent}%</div>
         </div>
-        <div className="w-32 h-3 bg-gray-700 rounded-full overflow-hidden">
-          <div
-            className="h-full bg-gradient-to-r from-cyan-500 to-purple-500 transition-all duration-500"
-            style={{ width: `${completionPercent}%` }}
-          />
-        </div>
-        <div className="text-cyan-400 font-bold">{completionPercent}%</div>
+        {unclaimedCount > 0 && (
+          <div className="text-yellow-400 font-semibold text-sm">
+            {unclaimedCount} reward{unclaimedCount !== 1 ? 's' : ''} waiting to be claimed!
+          </div>
+        )}
       </div>
 
       <div className="w-full space-y-8">
@@ -71,6 +86,8 @@ export function AchievementsMenu({ onBack }: AchievementsMenuProps) {
                   const currentProgress = achievementProgress?.progress || 0;
                   const progressPercent = Math.min((currentProgress / achievement.maxProgress) * 100, 100);
 
+                  const hasUnclaimedReward = isUnlocked && !achievementProgress?.rewardsClaimed;
+
                   return (
                     <div
                       key={achievement.id}
@@ -90,7 +107,12 @@ export function AchievementsMenu({ onBack }: AchievementsMenuProps) {
                               {achievement.name}
                             </h4>
                             {isUnlocked && (
-                              <span className="text-green-400 text-xs">Unlocked!</span>
+                              <>
+                                <span className="text-green-400 text-xs">Unlocked!</span>
+                                {hasUnclaimedReward && (
+                                  <span className="text-yellow-400 text-xs font-bold">New!</span>
+                                )}
+                              </>
                             )}
                           </div>
 
@@ -112,9 +134,19 @@ export function AchievementsMenu({ onBack }: AchievementsMenuProps) {
                             </div>
                           )}
 
-                          <div className="flex gap-3 mt-2 text-xs">
-                            <span className="text-cyan-400">+{achievement.xpReward} XP</span>
-                            <span className="text-yellow-400">+{achievement.coinReward} Coins</span>
+                          <div className="flex gap-3 mt-2 text-xs items-center justify-between">
+                            <div className="flex gap-3">
+                              <span className="text-cyan-400">+{achievement.xpReward} XP</span>
+                              <span className="text-yellow-400">+{achievement.coinReward} Coins</span>
+                            </div>
+                            {hasUnclaimedReward && (
+                              <button
+                                onClick={() => handleClaimReward(achievement, achievement.id)}
+                                className="px-3 py-1 bg-yellow-600 hover:bg-yellow-500 text-white font-bold rounded text-xs transition-colors"
+                              >
+                                Claim
+                              </button>
+                            )}
                           </div>
                         </div>
                       </div>
