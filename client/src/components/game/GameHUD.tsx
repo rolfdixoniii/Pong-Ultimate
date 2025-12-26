@@ -32,7 +32,7 @@ export function GameHUD() {
   const powerTriggersThisGame = usePong((state: any) => state.powerTriggersThisGame);
   const { getPlayerPower, unlockedSkins } = useSkins();
   const { isMuted, toggleMute } = useAudio();
-  const { level, pendingRewards, clearPendingRewards, recordRoundWin, recordRoundLoss, recordGameWin, recordGameLoss, getXpProgress, coins, stats, username, usernameColor } = useProgression();
+  const { level, pendingRewards, clearPendingRewards, recordRoundWin, recordRoundLoss, recordGameWin, recordGameLoss, getXpProgress, coins, stats, username, usernameColor, aiDifficulty } = useProgression();
   const { updateProgress, setProgress, incrementStreak, resetStreak, currentStreak } = useAchievements();
   const xpProgress = getXpProgress();
   const prevPhaseRef = useRef(phase);
@@ -370,7 +370,7 @@ export function GameHUD() {
             {winner === "player" ? (
               <div className="flex flex-col gap-3 md:gap-4 items-center">
                 <button
-                  onClick={() => { clearPendingRewards(); startNextRound(); }}
+                  onClick={() => { clearPendingRewards(); startNextRound(aiDifficulty); }}
                   className="px-8 md:px-12 py-3 md:py-4 bg-yellow-600 hover:bg-yellow-500 active:bg-yellow-400 text-white text-xl md:text-2xl font-bold rounded-lg transition-colors"
                 >
                   NEXT ROUND
@@ -388,7 +388,7 @@ export function GameHUD() {
             ) : (
               <div className="flex flex-col gap-3 md:gap-4 items-center">
                 <button
-                  onClick={() => { clearPendingRewards(); startGame(); }}
+                  onClick={() => { clearPendingRewards(); startGame(aiDifficulty); }}
                   className="px-8 md:px-12 py-3 md:py-4 bg-cyan-600 hover:bg-cyan-500 active:bg-cyan-400 text-white text-xl md:text-2xl font-bold rounded-lg transition-colors"
                 >
                   TRY AGAIN

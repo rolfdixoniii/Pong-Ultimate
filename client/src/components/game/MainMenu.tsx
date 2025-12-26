@@ -463,6 +463,29 @@ export function MainMenu() {
               </div>
             </div>
 
+            <div className="border-t border-gray-700 pt-6">
+              <div className="text-white text-lg mb-3 font-semibold">AI Difficulty</div>
+              <div className="grid grid-cols-3 gap-2">
+                {(["easy", "normal", "hard"] as const).map((diff) => (
+                  <button
+                    key={diff}
+                    onClick={() => setAIDifficulty(diff)}
+                    className={`px-3 py-2 rounded text-sm font-bold transition-colors ${aiDifficulty === diff
+                      ? "bg-purple-600 text-white"
+                      : "bg-gray-700 text-gray-300 hover:bg-gray-600"
+                      }`}
+                  >
+                    {diff.charAt(0).toUpperCase() + diff.slice(1)}
+                  </button>
+                ))}
+              </div>
+              <div className="text-gray-500 text-xs mt-2">
+                {aiDifficulty === "easy" && "AI reacts slower and makes more mistakes"}
+                {aiDifficulty === "normal" && "Balanced gameplay for most players"}
+                {aiDifficulty === "hard" && "AI reacts faster with fewer mistakes"}
+              </div>
+            </div>
+
             <div className="text-gray-400 text-sm text-left">
               <p className="font-semibold text-white mb-2">Game Info:</p>
               <p>• Win 5 points to win a round</p>
