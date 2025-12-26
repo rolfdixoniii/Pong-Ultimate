@@ -1,4 +1,4 @@
-import { useRef, useMemo } from "react";
+import { useRef, useMemo, useEffect } from "react";
 import { useFrame } from "@react-three/fiber";
 import * as THREE from "three";
 import { MapStyle, GameMap } from "@/lib/stores/useSkins";
@@ -9,24 +9,26 @@ interface MapBackgroundProps {
 }
 
 // ============================================
-// NEON NIGHT - Starfield + Grid
+// NEON NIGHT - Enhanced Starfield + Neon Grid
 // ============================================
 function StarfieldBackground() {
     const starsRef = useRef<THREE.InstancedMesh>(null);
     const gridRef = useRef<THREE.Mesh>(null);
+    const grid2Ref = useRef<THREE.Mesh>(null);
 
-    const starCount = 150;
+    const starCount = 200;
     const starData = useMemo(() => {
         const positions: THREE.Matrix4[] = [];
         const speeds: number[] = [];
         const phases: number[] = [];
+        const sizes: number[] = [];
 
         for (let i = 0; i < starCount; i++) {
             const matrix = new THREE.Matrix4();
-            const x = (Math.random() - 0.5) * 60;
-            const y = -8 - Math.random() * 25;
-            const z = (Math.random() - 0.5) * 40 - 15;
-            const scale = 0.03 + Math.random() * 0.06;
+            const x = (Math.random() - 0.5) * 80;
+            const y = -5 - Math.random() * 30;
+            const z = (Math.random() - 0.5) * 50 - 20;
+            const scale = 0.04 + Math.random() * 0.08;
 
             matrix.compose(
                 new THREE.Vector3(x, y, z),
@@ -34,81 +36,106 @@ function StarfieldBackground() {
                 new THREE.Vector3(scale, scale, scale)
             );
             positions.push(matrix);
-            speeds.push(0.5 + Math.random() * 2);
+            speeds.push(1 + Math.random() * 3);
             phases.push(Math.random() * Math.PI * 2);
+            sizes.push(scale);
         }
-        return { positions, speeds, phases };
+        return { positions, speeds, phases, sizes };
     }, []);
+
+    // Initialize star positions
+    useEffect(() => {
+        if (!starsRef.current) return;
+        for (let i = 0; i < starCount; i++) {
+            starsRef.current.setMatrixAt(i, starData.positions[i]);
+        }
+        starsRef.current.instanceMatrix.needsUpdate = true;
+    }, [starData]);
 
     useFrame(({ clock }) => {
         if (!starsRef.current) return;
 
         const time = clock.elapsedTime;
         for (let i = 0; i < starCount; i++) {
-            const twinkle = 0.3 + Math.sin(time * starData.speeds[i] + starData.phases[i]) * 0.7;
-            starsRef.current.setColorAt(i, new THREE.Color().setHSL(0.55, 0.1, twinkle));
+            const twinkle = 0.4 + Math.sin(time * starData.speeds[i] + starData.phases[i]) * 0.6;
+            // Brighter, more vibrant stars with cyan/white color
+            starsRef.current.setColorAt(i, new THREE.Color().setHSL(0.5 + Math.random() * 0.1, 0.3, twinkle));
         }
         if (starsRef.current.instanceColor) {
             starsRef.current.instanceColor.needsUpdate = true;
         }
 
+        // Animated grid pulsing
         if (gridRef.current) {
             const material = gridRef.current.material as THREE.MeshBasicMaterial;
-            material.opacity = 0.08 + Math.sin(time * 0.5) * 0.04;
+            material.opacity = 0.12 + Math.sin(time * 0.8) * 0.06;
+        }
+        if (grid2Ref.current) {
+            const material = grid2Ref.current.material as THREE.MeshBasicMaterial;
+            material.opacity = 0.08 + Math.sin(time * 0.6 + 1) * 0.04;
         }
     });
 
     return (
-        <group position={[0, 0, -20]}>
-            {/* Stars */}
+        <group position={[0, 0, -15]}>
+            {/* Bright stars with glow */}
             <instancedMesh ref={starsRef} args={[undefined, undefined, starCount]}>
-                <sphereGeometry args={[1, 6, 6]} />
-                <meshBasicMaterial color="#ffffff" />
+                <sphereGeometry args={[1, 8, 8]} />
+                <meshBasicMaterial color="#ffffff" toneMapped={false} />
             </instancedMesh>
 
-            {/* Neon Grid Floor */}
-            <mesh ref={gridRef} rotation={[-Math.PI / 2.5, 0, 0]} position={[0, -15, -10]}>
-                <planeGeometry args={[80, 60, 20, 15]} />
+            {/* Primary neon grid - cyan */}
+            <mesh ref={gridRef} rotation={[-Math.PI / 2.3, 0, 0]} position={[0, -12, -8]}>
+                <planeGeometry args={[100, 80, 30, 24]} />
                 <meshBasicMaterial
                     color="#00ffff"
                     wireframe
                     transparent
-                    opacity={0.1}
+                    opacity={0.15}
+                    toneMapped={false}
                 />
             </mesh>
 
-            {/* Second grid for depth */}
-            <mesh rotation={[-Math.PI / 2.8, 0, 0]} position={[0, -25, -20]}>
-                <planeGeometry args={[100, 80, 25, 20]} />
+            {/* Secondary grid - magenta/pink for depth */}
+            <mesh ref={grid2Ref} rotation={[-Math.PI / 2.6, 0, 0]} position={[0, -20, -15]}>
+                <planeGeometry args={[120, 100, 35, 28]} />
                 <meshBasicMaterial
                     color="#ff00ff"
                     wireframe
                     transparent
-                    opacity={0.05}
+                    opacity={0.08}
+                    toneMapped={false}
                 />
+            </mesh>
+
+            {/* Horizon glow line */}
+            <mesh position={[0, -8, -25]} rotation={[0, 0, 0]}>
+                <planeGeometry args={[150, 2]} />
+                <meshBasicMaterial color="#00ffff" transparent opacity={0.15} toneMapped={false} />
             </mesh>
         </group>
     );
 }
 
 // ============================================
-// MIDNIGHT - Floating Glowing Orbs
+// MIDNIGHT - Enhanced Floating Orbs
 // ============================================
 function OrbFieldBackground() {
     const orbsRef = useRef<THREE.Group>(null);
 
-    const orbCount = 25;
+    const orbCount = 35;
     const orbData = useMemo(() => {
-        return Array.from({ length: orbCount }, () => ({
+        return Array.from({ length: orbCount }, (_, i) => ({
             position: new THREE.Vector3(
-                (Math.random() - 0.5) * 50,
-                -10 - Math.random() * 20,
-                (Math.random() - 0.5) * 30 - 15
+                (Math.random() - 0.5) * 60,
+                -8 - Math.random() * 25,
+                (Math.random() - 0.5) * 40 - 18
             ),
-            scale: 0.3 + Math.random() * 0.8,
-            speed: 0.3 + Math.random() * 0.5,
+            scale: 0.4 + Math.random() * 1.0,
+            speed: 0.2 + Math.random() * 0.4,
             phase: Math.random() * Math.PI * 2,
-            color: Math.random() > 0.5 ? "#9b59b6" : "#3498db"
+            // More vibrant color palette
+            color: i % 3 === 0 ? "#a855f7" : i % 3 === 1 ? "#6366f1" : "#8b5cf6"
         }));
     }, []);
 
@@ -118,23 +145,48 @@ function OrbFieldBackground() {
 
         orbsRef.current.children.forEach((orb, i) => {
             const data = orbData[i];
-            orb.position.y = data.position.y + Math.sin(time * data.speed + data.phase) * 1.5;
-            orb.position.x = data.position.x + Math.sin(time * data.speed * 0.5 + data.phase) * 0.8;
+            if (!data) return;
+            // Smoother, more ethereal floating motion
+            orb.position.y = data.position.y + Math.sin(time * data.speed + data.phase) * 2;
+            orb.position.x = data.position.x + Math.sin(time * data.speed * 0.7 + data.phase) * 1.2;
+            orb.position.z = data.position.z + Math.cos(time * data.speed * 0.5 + data.phase) * 0.8;
         });
     });
 
     return (
         <group ref={orbsRef} position={[0, 0, -10]}>
+            {/* Dark backdrop */}
+            <mesh position={[0, -15, -35]}>
+                <planeGeometry args={[120, 60]} />
+                <meshBasicMaterial color="#0a0015" transparent opacity={0.8} />
+            </mesh>
+
             {orbData.map((orb, i) => (
                 <mesh key={i} position={orb.position.toArray()} scale={orb.scale}>
-                    <sphereGeometry args={[1, 12, 12]} />
+                    <sphereGeometry args={[1, 16, 16]} />
                     <meshStandardMaterial
                         color={orb.color}
                         emissive={orb.color}
-                        emissiveIntensity={0.8}
+                        emissiveIntensity={1.2}
                         transparent
-                        opacity={0.6}
+                        opacity={0.7}
+                        toneMapped={false}
                     />
+                </mesh>
+            ))}
+
+            {/* Add subtle particle dust */}
+            {Array.from({ length: 40 }, (_, i) => (
+                <mesh
+                    key={`dust-${i}`}
+                    position={[
+                        (Math.random() - 0.5) * 60,
+                        -5 - Math.random() * 20,
+                        (Math.random() - 0.5) * 35 - 15
+                    ]}
+                >
+                    <sphereGeometry args={[0.03 + Math.random() * 0.05, 6, 6]} />
+                    <meshBasicMaterial color="#c4b5fd" transparent opacity={0.4} />
                 </mesh>
             ))}
         </group>
@@ -142,20 +194,26 @@ function OrbFieldBackground() {
 }
 
 // ============================================
-// SUNSET PARADISE - Mountain Silhouettes
+// SUNSET PARADISE - Enhanced Mountain Silhouettes
 // ============================================
 function MountainBackground() {
-    const createMountainGeometry = (peaks: number, height: number, width: number) => {
+    const createMountainGeometry = (peaks: number, height: number, width: number, seed: number) => {
         const shape = new THREE.Shape();
         const segments = peaks * 2 + 1;
         const segmentWidth = width / segments;
+
+        // Use seed for consistent shapes
+        const pseudoRandom = (n: number) => {
+            const x = Math.sin(n * 12.9898 + seed * 78.233) * 43758.5453;
+            return x - Math.floor(x);
+        };
 
         shape.moveTo(-width / 2, 0);
 
         for (let i = 0; i < peaks; i++) {
             const baseX = -width / 2 + (i * 2 + 1) * segmentWidth;
             const peakX = baseX + segmentWidth / 2;
-            const peakHeight = height * (0.6 + Math.random() * 0.4);
+            const peakHeight = height * (0.5 + pseudoRandom(i) * 0.5);
 
             shape.lineTo(baseX, 0);
             shape.lineTo(peakX, peakHeight);
@@ -169,35 +227,44 @@ function MountainBackground() {
     };
 
     const mountainLayers = useMemo(() => [
-        { peaks: 8, height: 12, width: 80, z: -35, y: -12, color: "#1a0a20", opacity: 1 },
-        { peaks: 6, height: 10, width: 70, z: -30, y: -10, color: "#2d1b3d", opacity: 0.9 },
-        { peaks: 5, height: 8, width: 60, z: -25, y: -8, color: "#4a2c5a", opacity: 0.8 },
+        { peaks: 10, height: 15, width: 100, z: -40, y: -10, color: "#1a0520", opacity: 1, seed: 1 },
+        { peaks: 8, height: 12, width: 90, z: -35, y: -8, color: "#2d1040", opacity: 0.95, seed: 2 },
+        { peaks: 6, height: 10, width: 80, z: -30, y: -6, color: "#4a1a60", opacity: 0.9, seed: 3 },
+        { peaks: 5, height: 8, width: 70, z: -25, y: -5, color: "#6b2580", opacity: 0.85, seed: 4 },
     ], []);
 
     return (
         <group position={[0, 0, 0]}>
-            {/* Gradient sky backdrop */}
-            <mesh position={[0, -15, -40]} rotation={[0, 0, 0]}>
-                <planeGeometry args={[120, 50]} />
-                <meshBasicMaterial color="#ff6b35" transparent opacity={0.3} />
+            {/* Orange/gold gradient sky backdrop */}
+            <mesh position={[0, -5, -45]} rotation={[0, 0, 0]}>
+                <planeGeometry args={[150, 60]} />
+                <meshBasicMaterial color="#ff7033" transparent opacity={0.4} />
             </mesh>
 
-            {/* Sun glow */}
-            <mesh position={[15, -5, -38]}>
-                <circleGeometry args={[8, 32]} />
-                <meshBasicMaterial color="#ffcc00" transparent opacity={0.4} />
-            </mesh>
-            <mesh position={[15, -5, -37]}>
-                <circleGeometry args={[5, 32]} />
-                <meshBasicMaterial color="#ff8800" transparent opacity={0.6} />
+            {/* Outer sun glow */}
+            <mesh position={[20, 0, -42]}>
+                <circleGeometry args={[12, 48]} />
+                <meshBasicMaterial color="#ffaa00" transparent opacity={0.3} toneMapped={false} />
             </mesh>
 
-            {/* Mountain layers */}
+            {/* Middle sun glow */}
+            <mesh position={[20, 0, -41]}>
+                <circleGeometry args={[8, 48]} />
+                <meshBasicMaterial color="#ffcc33" transparent opacity={0.5} toneMapped={false} />
+            </mesh>
+
+            {/* Inner sun core */}
+            <mesh position={[20, 0, -40]}>
+                <circleGeometry args={[5, 48]} />
+                <meshBasicMaterial color="#ffee88" transparent opacity={0.8} toneMapped={false} />
+            </mesh>
+
+            {/* Mountain layers - back to front */}
             {mountainLayers.map((layer, i) => (
                 <mesh
                     key={i}
                     position={[0, layer.y, layer.z]}
-                    geometry={createMountainGeometry(layer.peaks, layer.height, layer.width)}
+                    geometry={createMountainGeometry(layer.peaks, layer.height, layer.width, layer.seed)}
                 >
                     <meshBasicMaterial
                         color={layer.color}
@@ -212,22 +279,23 @@ function MountainBackground() {
 }
 
 // ============================================
-// OCEAN BLUE - Underwater Bubbles + Light Rays
+// OCEAN BLUE - Enhanced Underwater Scene
 // ============================================
 function UnderwaterBackground() {
     const bubblesRef = useRef<THREE.InstancedMesh>(null);
 
-    const bubbleCount = 60;
+    const bubbleCount = 80;
     const bubbleData = useMemo(() => {
         const data = [];
         for (let i = 0; i < bubbleCount; i++) {
             data.push({
-                x: (Math.random() - 0.5) * 50,
-                y: -30 + Math.random() * 20,
-                z: (Math.random() - 0.5) * 30 - 15,
-                speed: 0.5 + Math.random() * 1.5,
-                scale: 0.1 + Math.random() * 0.25,
-                wobblePhase: Math.random() * Math.PI * 2
+                x: (Math.random() - 0.5) * 60,
+                y: -35 + Math.random() * 25,
+                z: (Math.random() - 0.5) * 40 - 18,
+                speed: 0.8 + Math.random() * 2,
+                scale: 0.08 + Math.random() * 0.2,
+                wobblePhase: Math.random() * Math.PI * 2,
+                wobbleSpeed: 1.5 + Math.random() * 2
             });
         }
         return data;
@@ -244,12 +312,13 @@ function UnderwaterBackground() {
 
         for (let i = 0; i < bubbleCount; i++) {
             const bubble = bubbleData[i];
-            let y = bubble.y + (time * bubble.speed) % 25;
-            if (y > -5) y = -30;
+            let y = bubble.y + (time * bubble.speed) % 35;
+            if (y > 0) y = -35;
 
-            const wobbleX = Math.sin(time * 2 + bubble.wobblePhase) * 0.3;
+            const wobbleX = Math.sin(time * bubble.wobbleSpeed + bubble.wobblePhase) * 0.5;
+            const wobbleZ = Math.cos(time * bubble.wobbleSpeed * 0.7 + bubble.wobblePhase) * 0.3;
 
-            tempPosition.set(bubble.x + wobbleX, y, bubble.z);
+            tempPosition.set(bubble.x + wobbleX, y, bubble.z + wobbleZ);
             tempScale.setScalar(bubble.scale);
             tempMatrix.compose(tempPosition, tempQuaternion, tempScale);
             bubblesRef.current.setMatrixAt(i, tempMatrix);
@@ -259,77 +328,107 @@ function UnderwaterBackground() {
 
     return (
         <group position={[0, 0, -10]}>
-            {/* Bubbles */}
+            {/* Deep ocean gradient background */}
+            <mesh position={[0, -15, -40]}>
+                <planeGeometry args={[120, 60]} />
+                <meshBasicMaterial color="#001525" transparent opacity={0.9} />
+            </mesh>
+
+            {/* Mid-depth water */}
+            <mesh position={[0, -10, -35]}>
+                <planeGeometry args={[120, 50]} />
+                <meshBasicMaterial color="#003355" transparent opacity={0.5} />
+            </mesh>
+
+            {/* Bubbles with glow effect */}
             <instancedMesh ref={bubblesRef} args={[undefined, undefined, bubbleCount]}>
-                <sphereGeometry args={[1, 8, 8]} />
+                <sphereGeometry args={[1, 12, 12]} />
                 <meshStandardMaterial
-                    color="#88ddff"
+                    color="#66ddff"
                     emissive="#00aaff"
-                    emissiveIntensity={0.3}
+                    emissiveIntensity={0.5}
                     transparent
-                    opacity={0.5}
+                    opacity={0.6}
+                    toneMapped={false}
                 />
             </instancedMesh>
 
-            {/* Light rays */}
-            {[...Array(5)].map((_, i) => (
+            {/* Enhanced light rays from surface */}
+            {[...Array(7)].map((_, i) => (
                 <mesh
                     key={i}
-                    position={[-20 + i * 10, -15, -25]}
-                    rotation={[0, 0, -0.3 + i * 0.15]}
+                    position={[-30 + i * 10, -10, -28]}
+                    rotation={[0.1, 0, -0.25 + i * 0.08]}
                 >
-                    <planeGeometry args={[2, 30]} />
+                    <planeGeometry args={[1.5, 35]} />
                     <meshBasicMaterial
                         color="#aaeeff"
                         transparent
-                        opacity={0.08}
+                        opacity={0.06 + (i % 2) * 0.03}
                         side={THREE.DoubleSide}
+                        toneMapped={false}
                     />
                 </mesh>
             ))}
 
-            {/* Deep water gradient */}
-            <mesh position={[0, -20, -30]}>
-                <planeGeometry args={[100, 40]} />
-                <meshBasicMaterial color="#001830" transparent opacity={0.6} />
-            </mesh>
+            {/* Caustic light pattern hint */}
+            {Array.from({ length: 20 }, (_, i) => (
+                <mesh
+                    key={`caustic-${i}`}
+                    position={[
+                        (Math.random() - 0.5) * 50,
+                        -3 - Math.random() * 5,
+                        -20 - Math.random() * 10
+                    ]}
+                    rotation={[-Math.PI / 2, 0, Math.random() * Math.PI]}
+                >
+                    <circleGeometry args={[0.5 + Math.random() * 1, 6]} />
+                    <meshBasicMaterial color="#88ddff" transparent opacity={0.08} />
+                </mesh>
+            ))}
         </group>
     );
 }
 
 // ============================================
-// FOREST GREEN - Floating Leaves + Fireflies
+// FOREST GREEN - Enhanced Nature Scene
 // ============================================
 function ForestBackground() {
     const leavesRef = useRef<THREE.Group>(null);
     const firefliesRef = useRef<THREE.InstancedMesh>(null);
 
-    const leafCount = 30;
-    const fireflyCount = 20;
+    const leafCount = 45;
+    const fireflyCount = 30;
 
     const leafData = useMemo(() => {
-        return Array.from({ length: leafCount }, () => ({
+        return Array.from({ length: leafCount }, (_, i) => ({
             position: new THREE.Vector3(
-                (Math.random() - 0.5) * 50,
-                -5 - Math.random() * 25,
-                (Math.random() - 0.5) * 30 - 15
+                (Math.random() - 0.5) * 60,
+                -3 - Math.random() * 28,
+                (Math.random() - 0.5) * 35 - 18
             ),
             rotation: Math.random() * Math.PI * 2,
-            speed: 0.2 + Math.random() * 0.4,
+            speed: 0.15 + Math.random() * 0.35,
             swayPhase: Math.random() * Math.PI * 2,
-            fallSpeed: 0.1 + Math.random() * 0.2
+            fallSpeed: 0.08 + Math.random() * 0.15,
+            size: 0.3 + Math.random() * 0.4,
+            // More varied green palette
+            colorIndex: i % 5
         }));
     }, []);
 
     const fireflyData = useMemo(() => {
         return Array.from({ length: fireflyCount }, () => ({
-            x: (Math.random() - 0.5) * 40,
-            y: -8 - Math.random() * 15,
-            z: (Math.random() - 0.5) * 25 - 10,
+            x: (Math.random() - 0.5) * 50,
+            y: -6 - Math.random() * 18,
+            z: (Math.random() - 0.5) * 30 - 12,
             phase: Math.random() * Math.PI * 2,
-            speed: 0.5 + Math.random() * 1
+            speed: 0.3 + Math.random() * 0.8,
+            blinkSpeed: 2 + Math.random() * 3
         }));
     }, []);
+
+    const leafColors = ["#1a5c1a", "#228B22", "#2db82d", "#50c878", "#90EE90"];
 
     useFrame(({ clock }) => {
         const time = clock.elapsedTime;
@@ -338,17 +437,18 @@ function ForestBackground() {
         if (leavesRef.current) {
             leavesRef.current.children.forEach((leaf, i) => {
                 const data = leafData[i];
-                leaf.rotation.z = data.rotation + Math.sin(time * data.speed + data.swayPhase) * 0.5;
-                leaf.rotation.x = Math.sin(time * data.speed * 0.7) * 0.3;
+                if (!data) return;
+                leaf.rotation.z = data.rotation + Math.sin(time * data.speed + data.swayPhase) * 0.6;
+                leaf.rotation.x = Math.sin(time * data.speed * 0.8 + data.swayPhase * 0.5) * 0.4;
 
-                let y = data.position.y - (time * data.fallSpeed) % 30;
-                if (y < -30) y = -5;
+                let y = data.position.y - (time * data.fallSpeed) % 35;
+                if (y < -32) y = -3;
                 leaf.position.y = y;
-                leaf.position.x = data.position.x + Math.sin(time * 0.5 + data.swayPhase) * 2;
+                leaf.position.x = data.position.x + Math.sin(time * 0.4 + data.swayPhase) * 2.5;
             });
         }
 
-        // Animate fireflies
+        // Animate fireflies with realistic blinking
         if (firefliesRef.current) {
             const tempMatrix = new THREE.Matrix4();
             const tempPosition = new THREE.Vector3();
@@ -357,12 +457,14 @@ function ForestBackground() {
 
             for (let i = 0; i < fireflyCount; i++) {
                 const ff = fireflyData[i];
-                const glow = 0.05 + Math.sin(time * ff.speed * 3 + ff.phase) * 0.03;
+                // More organic blink pattern
+                const blink = Math.max(0, Math.sin(time * ff.blinkSpeed + ff.phase));
+                const glow = 0.03 + blink * 0.08;
 
                 tempPosition.set(
-                    ff.x + Math.sin(time * ff.speed + ff.phase) * 2,
-                    ff.y + Math.sin(time * ff.speed * 0.7 + ff.phase) * 1.5,
-                    ff.z
+                    ff.x + Math.sin(time * ff.speed + ff.phase) * 2.5,
+                    ff.y + Math.sin(time * ff.speed * 0.6 + ff.phase * 1.3) * 2,
+                    ff.z + Math.cos(time * ff.speed * 0.4 + ff.phase) * 1.5
                 );
                 tempScale.setScalar(glow);
                 tempMatrix.compose(tempPosition, tempQuaternion, tempScale);
@@ -374,36 +476,59 @@ function ForestBackground() {
 
     return (
         <group position={[0, 0, -10]}>
-            {/* Forest backdrop */}
-            <mesh position={[0, -15, -35]}>
-                <planeGeometry args={[100, 40]} />
-                <meshBasicMaterial color="#0a1a0a" transparent opacity={0.8} />
+            {/* Dark forest backdrop */}
+            <mesh position={[0, -12, -40]}>
+                <planeGeometry args={[120, 50]} />
+                <meshBasicMaterial color="#051505" transparent opacity={0.9} />
             </mesh>
+
+            {/* Subtle tree silhouettes */}
+            {Array.from({ length: 8 }, (_, i) => (
+                <mesh
+                    key={`tree-${i}`}
+                    position={[-35 + i * 10, -10, -35 + (i % 2) * 5]}
+                >
+                    <coneGeometry args={[3, 12 + Math.random() * 5, 4]} />
+                    <meshBasicMaterial color="#0a200a" transparent opacity={0.7} />
+                </mesh>
+            ))}
 
             {/* Leaves */}
             <group ref={leavesRef}>
                 {leafData.map((leaf, i) => (
-                    <mesh key={i} position={leaf.position.toArray()} rotation={[0, 0, leaf.rotation]}>
-                        <planeGeometry args={[0.4, 0.6]} />
+                    <mesh
+                        key={i}
+                        position={leaf.position.toArray()}
+                        rotation={[0, 0, leaf.rotation]}
+                        scale={leaf.size}
+                    >
+                        <planeGeometry args={[1, 1.5]} />
                         <meshBasicMaterial
-                            color={i % 3 === 0 ? "#228B22" : i % 3 === 1 ? "#32CD32" : "#90EE90"}
+                            color={leafColors[leaf.colorIndex]}
                             transparent
-                            opacity={0.7}
+                            opacity={0.75}
                             side={THREE.DoubleSide}
                         />
                     </mesh>
                 ))}
             </group>
 
-            {/* Fireflies */}
+            {/* Fireflies with bright glow */}
             <instancedMesh ref={firefliesRef} args={[undefined, undefined, fireflyCount]}>
-                <sphereGeometry args={[1, 6, 6]} />
+                <sphereGeometry args={[1, 8, 8]} />
                 <meshStandardMaterial
                     color="#ffff00"
                     emissive="#ffff00"
-                    emissiveIntensity={2}
+                    emissiveIntensity={3}
+                    toneMapped={false}
                 />
             </instancedMesh>
+
+            {/* Ground fog effect */}
+            <mesh position={[0, -25, -20]} rotation={[-Math.PI / 2, 0, 0]}>
+                <planeGeometry args={[100, 40]} />
+                <meshBasicMaterial color="#1a3a1a" transparent opacity={0.4} />
+            </mesh>
         </group>
     );
 }
@@ -412,16 +537,6 @@ function ForestBackground() {
 // MAIN EXPORT
 // ============================================
 export function MapBackground({ mapId }: MapBackgroundProps) {
-    // Initialize star positions on mount
-    const initialized = useRef(false);
-    const starsRef = useRef<THREE.InstancedMesh>(null);
-
-    useMemo(() => {
-        if (mapId === "neon" && starsRef.current && !initialized.current) {
-            initialized.current = true;
-        }
-    }, [mapId]);
-
     switch (mapId) {
         case "neon":
             return <StarfieldBackground />;

@@ -42,7 +42,7 @@ function App() {
                 position: [0, 15, 18],
                 fov: 50,
                 near: 0.1,
-                far: 100
+                far: 150
               }}
               dpr={dpr}
               gl={{
@@ -58,7 +58,7 @@ function App() {
                 onDecline={() => setDpr(Math.max(dpr - 0.25, 1))}
               />
 
-              <color attach="background" args={["#0a0a0f"]} />
+              <color attach="background" args={["#050508"]} />
 
               <ambientLight intensity={0.5} />
               <directionalLight
@@ -68,7 +68,7 @@ function App() {
               <pointLight position={[-10, 10, -10]} intensity={0.6} color="#4fc3f7" />
               <pointLight position={[10, 10, -10]} intensity={0.6} color="#ef5350" />
 
-              <fog attach="fog" args={["#0a0a0f", 30, 60]} />
+              <fog attach="fog" args={["#050508", 40, 80]} />
 
               <Suspense fallback={null}>
                 <GameScene />
